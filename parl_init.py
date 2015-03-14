@@ -56,7 +56,6 @@ def return_mp_and_office_details_from_xml(mp_xml):
     if name_xml is None:
         name_xml = mp_xml.find('full_name')
 
-    #for mp in mps_xml.findall('match'):
     mps_list.append((
                     name_xml.text, 
                     mp_xml.find('party').text,
@@ -65,7 +64,6 @@ def return_mp_and_office_details_from_xml(mp_xml):
                     mp_xml.find('constituency').text,
                     ))
 
-    
     if mp_xml.find('office') is not None:
         jobs = mp_xml.find('office')
         for job in jobs.findall('match'):
@@ -82,55 +80,46 @@ def return_mp_and_office_details_from_xml(mp_xml):
                                 ))
     return (mps_list, offices_list)
 
-def load_details_from_major_parties_mps():
+def load_mp_details():  
     mps_list = []
     offices_list = []
+
     parties = ['conservative', 'labour', 'liberal democrat', 'green', 'independent', 'ukip',
                     'DUP', 'sinn fein', 'sdlp', 'plaid cymru', 'scottish national party']
     
+    #collate details from major parties & insert 
     for party in parties:
         mps_xml = fetch_xml_online('getMPs', '&party=%s'%party)
         for mp_xml in mps_xml.findall('match'):
             party_mps, party_offices = return_mp_and_office_details_from_xml(mp_xml)
+            
             mps_list.extend(party_mps)
             offices_list.extend(party_offices)
-            
+      
     with sqlite3.connect('parl.db') as connection:
         cur = connection.cursor()
         cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
-                        WHERE Constituency=?', mps_list)
-        cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?)', offices_list)
-        connection.commit()
+                        WHERE Constituency=?', mps_list)  
+        mps_list = []
 
-def load_straggler_mp_details():
-    with sqlite3.connect('parl.db') as connection:
-        cur = connection.cursor()
+
+    #collate details from minor parties
         cur.execute('SELECT Constituency FROM MPCommons WHERE MP=0')
-
         empty_seats = cur.fetchall()
-
+        
         for seat in empty_seats:
             seat_xml = fetch_xml_online('getMP', '&constituency=%s'%seat)
-            print etree.tostring(seat_xml)
             mp, office = return_mp_and_office_details_from_xml(seat_xml)
-            print mp, office
-            
-            '''if seat_xml.find('error') is None:
-                mp_id = int(seat_xml.find('member_id').text)
-                name = seat_xml.find('first_name').text+' '+seat_xml.find('last_name').text
-                party = seat_xml.find('party').text
-                person_id = int(seat_xml.find('person_id').text)
-            else:
-                mp_id = 0
-                name = 'Empty Seat'
-                party = 'Empty Seat'
-                person_id = 0
-            constituency = seat_xml.find('constituency').text
 
-            straggler = (name, party, mp_id, person_id, constituency)'''
-            cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
-                       WHERE Constituency=?', mp)
+            mps_list.extend(mp)
+            offices_list.extend(office)
+
+    #input remaining data and offices into databases
+        cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?)', offices_list)
+        cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
+                        WHERE Constituency=?', mps_list)
         connection.commit()
+
 
 def download_images_from_person_id(person_id):
     image_req = requests.get(site+'images/mps/%d.jpg'%person_id)
@@ -165,13 +154,12 @@ def initial_setup():
 
 if __name__ == '__main__':
     create_database()
-    print'hey'
     load_constituencies()
-    print'yo'
-    load_details_from_major_parties_mps()
+    
+    load_mp_details()
 
-    load_straggler_mp_details()
-    #load_images_for_imageless_mps()
+    #load_straggler_mp_details()
+    load_images_for_imageless_mps()
 
 
 

@@ -99,21 +99,22 @@ def load_straggler_mp_details():
                        WHERE Constituency=?', straggler)
         connection.commit()
 
-def update_images():
+def fetch_ids_without_images():
     with sqlite3.connect('parl.db') as connection:
         cur = connection.cursor()
-        cur.execute('SELECT PersonId FROM MPCommons WHERE ImageUrl=null')
+        cur.execute('SELECT PersonId FROM MPCommons WHERE ImageUrl IS NULL')
+        missing_images = cur.fetchall()
+        print missing_images
+
+
 
 
 
 if __name__ == '__main__':
-    create_database()
-
-    load_constituencies()
-
-    load_major_party_mp_details()
-
-    load_straggler_mp_details()
-
+    #create_database()
+    #load_constituencies()
+    #load_major_party_mp_details()
+    #load_straggler_mp_details()
+    fetch_ids_without_images()
 
 

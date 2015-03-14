@@ -99,22 +99,40 @@ def load_straggler_mp_details():
                        WHERE Constituency=?', straggler)
         connection.commit()
 
-def fetch_ids_without_images():
+    
+def download_images_from_person_id(person_id):
+    image_req = requests.get(site+'images/mps/%d.jpg'%person_id)
+    with open('profile_images/%d.jpg'%person_id, 'w') as img:
+        img.write(image_req.content)
+        img.close()
+
+def load_images_for_imageless_mps():
+    if not os.path.exists('profile_images'):
+        os.makedirs('profile_images')
     with sqlite3.connect('parl.db') as connection:
         cur = connection.cursor()
         cur.execute('SELECT PersonId FROM MPCommons WHERE ImageUrl IS NULL')
-        missing_images = cur.fetchall()
-        print missing_images
+        
+        mps_missing_images = cur.fetchall()
+        
+        for mp_tuple in mps_missing_images:
+            person_id = mp_tuple[0]
+            download_images_from_person_id(person_id)
+            cur.execute('UPDATE MPCommons SET ImageUrl=? WHERE PersonId=?',
+                           ('images/mps/%s.jpg'%person_id, person_id))
+        connection.commit()
+
 
 
 
 
 
 if __name__ == '__main__':
-    #create_database()
-    #load_constituencies()
-    #load_major_party_mp_details()
-    #load_straggler_mp_details()
-    fetch_ids_without_images()
+    create_database()
+    load_constituencies()
+    load_major_party_mp_details()
+    load_straggler_mp_details()
+    load_images_for_imageless_mps()
+
 
 

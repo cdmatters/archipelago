@@ -2,6 +2,7 @@
 .DS_Store
 *.db
 TWFY_key.py
+profile_images/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

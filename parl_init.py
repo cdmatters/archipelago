@@ -87,7 +87,7 @@ def load_mp_details():
     parties = ['conservative', 'labour', 'liberal democrat', 'green', 'independent', 'ukip',
                     'DUP', 'sinn fein', 'sdlp', 'plaid cymru', 'scottish national party']
     
-    #collate details from major parties & insert 
+    #collate details from major parties & insert names into db
     for party in parties:
         mps_xml = fetch_xml_online('getMPs', '&party=%s'%party)
         for mp_xml in mps_xml.findall('match'):
@@ -102,8 +102,7 @@ def load_mp_details():
                         WHERE Constituency=?', mps_list)  
         mps_list = []
 
-
-    #collate details from minor parties
+    #collate details from minor parties 
         cur.execute('SELECT Constituency FROM MPCommons WHERE MP=0')
         empty_seats = cur.fetchall()
         
@@ -138,28 +137,22 @@ def load_images_for_imageless_mps():
         for mp_tuple in mps_missing_images:
             person_id = mp_tuple[0]
             download_images_from_person_id(person_id)
+            #insert in for loop incase interrupted
             cur.execute('UPDATE MPCommons SET ImageUrl=? WHERE PersonId=?',
-                           ('images/mps/%s.jpg'%person_id, person_id))
+                           ('images/mps/%s.jpg'%person_id, person_id)) 
             connection.commit()
-
-
-
 
 def initial_setup():
     create_database()
     load_constituencies()
-    load_details_from_major_parties_mps
-    load_straggler_mp_details()
+    load_mp_details()
     load_images_for_imageless_mps()
 
 if __name__ == '__main__':
-    create_database()
-    load_constituencies()
-    
+    #create_database()
+    #load_constituencies()
     load_mp_details()
-
-    #load_straggler_mp_details()
-    load_images_for_imageless_mps()
+    #load_images_for_imageless_mps()
 
 
 

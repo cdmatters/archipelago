@@ -16,19 +16,6 @@ base = 'api/%s?key=%s&output=%s' % ('%s', key, output)
 ##############
 
 
-def create_database():
-    if os.path.isfile('parl.db'):
-        os.remove('parl.db')
-    with sqlite3.connect('parl.db') as connection:
-        cur = connection.cursor()
-        cur.execute("CREATE TABLE MPCommons (Name Text, Constituency Text, MP Boolean,\
-                                            Party Text, ImageUrl Text, MemberId Number,\
-                                            PersonId Number, OfficialId Number)")
-        cur.execute("CREATE TABLE Offices  (PersonId Number, Office Text,\
-                                            StartDate Text, EndDate Text, Name Text)")
-        cur.execute("CREATE TABLE Addresses (PersonId Number, Type Text, Address Text)")
-
-
 def fetch_xml_online(base_arg, bonus_arg=''):
     url = site + base%base_arg + bonus_arg
     
@@ -145,19 +132,15 @@ def load_images_for_imageless_mps():
                            ('images/mps/%s.jpg'%person_id, person_id)) 
             connection.commit()
 
-def initial_setup():
+def TWFY_setup():
     start = time.time()
-    create_database()
     load_constituencies()
     load_mp_details()
     load_images_for_imageless_mps()
-    print 'done in %ds'%(time.time()-start)
+    print 'TWFY Setup in %ds'%(time.time()-start)
 
 if __name__ == '__main__':
-    #create_database()
-    #load_constituencies()
-    load_mp_details()
-    #load_images_for_imageless_mps()
+    TWFY_setup()
 
 
 

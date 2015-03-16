@@ -5,6 +5,7 @@ import requests
 from lxml import etree
 import os
 import TWFY_key  #a file; only contains:  key = 'your_key_string'
+import time
 
 
 ##############
@@ -14,6 +15,7 @@ site= 'http://www.theyworkforyou.com/'
 base = 'api/%s?key=%s&output=%s' % ('%s', key, output)
 ##############
 
+
 def create_database():
     if os.path.isfile('parl.db'):
         os.remove('parl.db')
@@ -21,9 +23,11 @@ def create_database():
         cur = connection.cursor()
         cur.execute("CREATE TABLE MPCommons (Name Text, Constituency Text, MP Boolean,\
                                             Party Text, ImageUrl Text, MemberId Number,\
-                                            PersonId Number)")
+                                            PersonId Number, OfficialId Number)")
         cur.execute("CREATE TABLE Offices  (PersonId Number, Office Text,\
                                             StartDate Text, EndDate Text, Name Text)")
+        cur.execute("CREATE TABLE Addresses (PersonId Number, Type Text, Address Text)")
+
 
 def fetch_xml_online(base_arg, bonus_arg=''):
     url = site + base%base_arg + bonus_arg
@@ -45,7 +49,7 @@ def load_constituencies():
         cur = connection.cursor()
         cur.execute('DELETE from MPCommons')
         cur.executemany("INSERT INTO MPCommons \
-                        VALUES(null,?, 0, null,null,0,0)", constituencies)
+                        VALUES(null,?, 0, null,null,0,0,0)", constituencies)
         connection.commit()
 
 def return_mp_and_office_details_from_xml(mp_xml):
@@ -119,7 +123,6 @@ def load_mp_details():
                         WHERE Constituency=?', mps_list)
         connection.commit()
 
-
 def download_images_from_person_id(person_id):
     image_req = requests.get(site+'images/mps/%d.jpg'%person_id)
     with open('profile_images/%d.jpg'%person_id, 'w') as img:
@@ -143,10 +146,12 @@ def load_images_for_imageless_mps():
             connection.commit()
 
 def initial_setup():
+    start = time.time()
     create_database()
     load_constituencies()
     load_mp_details()
     load_images_for_imageless_mps()
+    print 'done in %ds'%(time.time()-start)
 
 if __name__ == '__main__':
     #create_database()

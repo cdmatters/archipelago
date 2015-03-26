@@ -41,11 +41,9 @@ def collect_data(api, handle):
     
     twitter_user = api.get_user(screen_name=handle)
     twirp = Twirp(twitter_user)
+    print twirp
     
     add_to_database('users', twirp.to_database())
-
-
-
 
 # def pull_tweets_from_user(api, handle):
 #     print handle
@@ -71,7 +69,7 @@ class Tweet(object):
 
 class Twirp(object):
     def __init__(self, user):
-        self.statuses = ''
+        self.statuses = 0
         self.followers = 0
         self.friends = 0
         self.geo = False
@@ -79,10 +77,15 @@ class Twirp(object):
         self.name = ''
         self.handle = ''
 
-        parse_entity()
-        pass
+        self.parse_user(user)
 
+    def __str__(self):
+        return '||%s : %s\n||Id %d; Fol %d; Fri %d; Geo %s ' % (
+            self.handle, self.name, self.id, 
+            self.followers, self.friends, self.geo )
+        
     def parse_user(self, user):
+        
         pass
 
     def to_database(self):
@@ -96,4 +99,4 @@ if __name__ == '__main__':
     print to_do_list[0]
     session_api = authorize_twitter()
 
-    # pull_tweets_from_user(session_api, 'KeeleyMP')
+    collect_data(session_api, 'KeeleyMP')

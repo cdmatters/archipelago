@@ -6,18 +6,24 @@ import requests
 import dataset
 import time
 import tweepy
+import json
+import os
 import tweepy_key as tk
 
 
 def create_twirpy_db():
-    with sqlite3.connect('twirpy.db') as connection:
-        cur = connection.cursor()
-        cur.execute('CREATE TABLE RawData (UserID Number, UserHandle Text, Type Text,\
-                                            ToId Number, ToHandle Text, Count Number, \
-                                            Content Text, Relevant Boolean)')
-        cur.execute('CREATE TABLE UserData (UserID Number, TweetCount Number,\
-                                            RetweetCount Number, BeenRetweeted Number,\
-                                            FavouriteHashtag Text, HashtagCount Number ')
+    
+    if not os.path.exists('./twirpy.db'):
+        with sqlite3.connect('twirpy.db') as connection:
+            cur = connection.cursor()
+            cur.execute('CREATE TABLE TweetData (UserID Number, UserHandle Text,\
+                                                ToIds Number, ToHandle Text, Count Number, \
+                                                Content Text, Retweet Text, Hashtags Text )')
+            cur.execute('CREATE TABLE TwirpData (UserID Number UNIQUE, UserName Text, Handle Text, \
+                                                FollowersCount Number, FriendsCount Number,\
+                                                TweetCount Number, RetweetCount Number, \
+                                                BeenRetweeted Number, FavouriteHashtag Text, \
+                                                HashtagCount Number, OfficialId Number)')
 
 def authorize_twitter():
     auth = tweepy.auth.OAuthHandler(tk.consumer_key, tk.consumer_secret)
@@ -25,6 +31,9 @@ def authorize_twitter():
 
     api = tweepy.API(auth)
     return api 
+
+
+
 
 def return_twitter_list():
     with sqlite3.connect('../parl.db') as connection:
@@ -34,16 +43,14 @@ def return_twitter_list():
     return tuplelist
 
 
-def add_to_database(table, item):
-    pass
-
-def collect_data(api, handle):
+def collect_twirp_data(api, handle, official_id):
     
     twitter_user = api.get_user(screen_name=handle)
-    twirp = Twirp(twitter_user)
-    print twirp
+    twirp = Twirp(twitter_user, 'twitter')
+    twirp.official_id = official_id
     
-    add_to_database('users', twirp.to_database())
+    print twirp
+    twirp.to_database()
 
 # def pull_tweets_from_user(api, handle):
 #     print handle
@@ -56,6 +63,16 @@ def collect_data(api, handle):
     
 #     time.sleep(45)
 
+
+def monitor_calls(api):
+    '''This function will return the number of requests remaining and the 
+    session expiration time, for a certain request, specified in the ar'''
+
+    monitor = api.rate_limit_status()
+    print json.dumps(monitor, sort_keys=True,
+                    indent=4, separators=(',', ': '))
+    return ()
+
         
 class Tweet(object):
     def __init__(self, tweet):
@@ -67,28 +84,57 @@ class Tweet(object):
     def to_database(self):
         pass
 
+
+
 class Twirp(object):
-    def __init__(self, user):
+    def __init__(self, user, source):
         self.statuses = 0
-        self.followers = 0
-        self.friends = 0
+        self.followers_count = 0
+        self.friends_count = 0
         self.geo = False
         self.id = 0
         self.name = ''
         self.handle = ''
+        self.official_id = 0 
+        self.retweet_count = 0
+        self.been_retweet_count = 0 
+        self.favourite_hashtag = 'NULL'
+        self.hashtag_count = 0
 
-        self.parse_user(user)
+        if source=='twitter':
+            self.from_twitter(user)
+
+        elif source=='database':
+            self.from_database(user)
 
     def __str__(self):
         return '||%s : %s\n||Id %d; Fol %d; Fri %d; Geo %s ' % (
             self.handle, self.name, self.id, 
-            self.followers, self.friends, self.geo )
-        
-    def parse_user(self, user):
-        
-        pass
+            self.followers_count, self.friends_count, self.geo )
+
+    def from_twitter(self, user ):
+        self.statuses = user.statuses_count
+        self.followers_count = user.followers_count
+        self.friends_count = user.friends_count
+        self.geo = user.geo_enabled
+        self.id = user.id
+        self.name = user.name
+        self.handle = user.screen_name
+        self.official_id = 0
 
     def to_database(self):
+        input_tuple =  (self.id, self.name, self.handle, self.followers_count, 
+                        self.friends_count, self.statuses, self.retweet_count, 
+                        self.been_retweet_count, self.favourite_hashtag,
+                        self.hashtag_count, self.official_id)
+
+        with sqlite3.connect('twirpy.db') as connection:
+            cur = connection.cursor()
+            cur.execute('INSERT OR REPLACE INTO TwirpData\
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?) ', input_tuple)
+
+
+    def from_database(self, user):
         pass
 
 
@@ -98,5 +144,8 @@ if __name__ == '__main__':
     to_do_list = return_twitter_list()
     print to_do_list[0]
     session_api = authorize_twitter()
+    create_twirpy_db()
 
-    collect_data(session_api, 'KeeleyMP')
+    collect_twirp_data(session_api, 'KeeleyMP',1)
+    monitor_calls(session_api)
+

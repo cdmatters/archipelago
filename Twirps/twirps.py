@@ -74,19 +74,20 @@ with that record'''
     print unicode(twirp)
     twirp.to_database()
 
-def collect_tweet_data(api, user_id, since_id=None):
+def collect_tweet_data(api, user_id, max_id=None, no_of_items=3200):
     '''Feeding in the session, a user_id and possibly tweet id, this queries the 
 twitter API, instantiates a Tweet class with data and populates the database with 
 that tweet'''
 
-    for tweet_data in tweepy.Cursor(api.user_timeline, id=user_id).items(20):
+    for tweet_data in tweepy.Cursor(api.user_timeline, id=user_id, max_id=max_id).items(no_of_items):
 
+        tweet = Tweet(tweet_data, 'twitter')
+        tweet.to_database()
         try:
-            tweet = Tweet(tweet_data, 'twitter')
-            #print tweet, '\n'
-            tweet.to_database()
-        except Exception, e:
-            print e
+            print tweet, '\n'
+        except:
+            continue
+
 
 
 def monitor_calls(api):
@@ -97,6 +98,30 @@ session expiration time, for a certain request, specified in the ar'''
     print json.dumps(monitor, sort_keys=True,
                     indent=4, separators=(',', ': '))
     return ()
+
+def return_list_for_tweet_scan():
+    to_do_list = []
+    with sqlite3.connect('twirpy.db') as connection:
+        cur = connection.cursor()
+        cur.execute('SELECT UserID, TweetCount FROM TwirpData')
+        twirp_list = cur.fetchall()
+
+        for twirp_tuple in twirp_list:
+            cur.execute('SELECT COUNT(TwitterID) FROM TweetData WHERE UserID =?',
+                (twirp_tuple[0],))
+            records = cur.fetchall()
+            cur.execute('SELECT MIN(TwitterID) FROM TweetData WHERE UserID=?',
+                (twirp_tuple[0],))
+            start_point = cur.fetchall()
+
+            if records[0][0] != twirp_tuple[1] and records[0][0]<3180:
+                remaining = 3200-records[0][0]
+
+                to_do_list.append((twirp_tuple[0], remaining, start_point[0][0]))
+
+    return to_do_list
+
+
 
 def get_twirps_main(api):
     complete_mp_list = return_twitter_list()
@@ -112,8 +137,19 @@ def get_twirps_main(api):
         except Exception, e:
             print e
 
-def get_tweets_main(api):
-    pass
+def get_tweets_main():
+    
+    while True:
+        api = authorize_twitter()
+        try:
+            to_do = return_list_for_tweet_scan()
+            for target in to_do:
+                collect_tweet_data(api, target[0], no_of_items=target[1], max_id=target[2])
+        except Exception, e:
+            print e
+            time.sleep(15*61)
+            continue
+
 
 
         
@@ -162,9 +198,9 @@ class Tweet(object):
 
 
     def __str__(self):
-        return u'Tweet %d %s ||RC: %d FC:%d RT:%s||\n @ %s || # %s || Url %s\nContent: %s' %(
+        return u'Tweet %d %s || RC: %d || FC: %d || RT: %s || @ %s || # %s || Url %s\nContent: %s' %(
             self.tweetid, self.handle, self.retweet_count, self.favourite_count,
-            self.retweet, str(self.mention_handles), str(self.hashtags), str(self.urls),
+            self.retweet, len(self.mentions), len(self.hashtags), len(self.urls),
             unicode(self.content) )
 
     def from_database(self, tweet):
@@ -246,8 +282,11 @@ if __name__ == '__main__':
     create_twirpy_db()
 
     #get_twirps_main(session_api)
-    collect_tweet_data(session_api, 388954439)
+    #collect_tweet_data(session_api, 388954439)
     #monitor_calls(session_api)
+    get_tweets_main()
+
+    #print return_list_for_tweet_scan()
 
 
 

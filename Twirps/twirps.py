@@ -12,8 +12,6 @@ import os
 import tweepy_key as tk
 
 
-
-
 def create_twirpy_db():
     '''Creates a database with tables for TweetData and TwirpData'''
     
@@ -42,8 +40,6 @@ def authorize_twitter():
     return api 
 
 
-
-
 def return_twitter_list():
     '''Returns a list of tuples, each containing an MPs OfficialId and Twitter handle'''
 
@@ -63,6 +59,7 @@ Twirps that have already been collected'''
         cur.execute('SELECT OfficialId, Handle FROM TwirpData')
         tuplelist = cur.fetchall()
     return tuplelist
+
 
 def collect_twirp_data(api, handle, official_id):
     '''Feeding in the session, a handle and it's mp's official id, this queries the
@@ -143,22 +140,30 @@ class Tweet(object):
         self.tweetid  = tweet.id
         self.userid = tweet.user.id
         self.handle = tweet.user.screen_name
-        self.mentions = [ (ent['id'],ent['screen_name'] 
-                            ) for ent in tweet.entities['user_mentions'] ]
-        self.content = tweet.text
-        if tweet.retweeted:
-            self.retweet = 'YES'
+        self.date = tweet.created_at
+        
+        
+
+
             #tweet.retweeted_status['user']['id']
         self.retweet_count = tweet.retweet_count
         self.favourite_count  = tweet.favorite_count
-        self.hashtags =  [ent['text'] for ent in tweet.entities['hashtags']]
-        self.date = tweet.created_at
-        self.urls = [urls['expanded_url'] for urls in tweet.entities['urls']]
-
+        
         if tweet.in_reply_to_user_id != None:
             #self.mentions.append((tweet.in_reply_to_user_id, tweet.in_reply_to_screen_name))
-            self.retweet = 'reply'
-        pass
+            self.retweet = 'REPLY'
+
+        if hasattr(tweet, 'retweeted_status'):
+            tweet = tweet.retweeted_status
+            self.retweet = tweet.user.screen_name
+            self.mentions.append((tweet.user.id, tweet.user.screen_name))
+
+        self.content = tweet.text
+        self.mentions = [ (ent['id'],ent['screen_name'] 
+                            ) for ent in tweet.entities['user_mentions'] ]
+        self.hashtags =  [ent['text'] for ent in tweet.entities['hashtags']]
+        self.urls = [urls['expanded_url'] for urls in tweet.entities['urls']]
+
 
     def __str__(self):
         return u'Tweet %d %s ||RC: %d FC:%d RT:%s||\n @ %s || # %s || Url %s\nContent: %s' %(

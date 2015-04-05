@@ -19,8 +19,9 @@ def create_twirpy_db():
         with sqlite3.connect('twirpy.db') as connection:
             cur = connection.cursor()
             cur.execute('CREATE TABLE TweetData (UserID Number, UserHandle Text,\
-                                                ToIds Number, ToHandle Text, Count Number, \
-                                                Content Text, Retweet Text, Hashtags Text )')
+                                                ToIds Number, ToHandle Text, FavouriteCount Number, \
+                                                RetweetCount Number, Content Text, Retweet Text, \
+                                                Hashtags Text, CreatedDate Text, TwitterID Number, Urls Text )')
             cur.execute('CREATE TABLE TwirpData (UserID Number UNIQUE, UserName Text, Handle Text, \
                                                 FollowersCount Number, FriendsCount Number,\
                                                 TweetCount Number, RetweetCount Number, \
@@ -69,9 +70,23 @@ with that record'''
     twirp = Twirp(twitter_user, 'twitter')
     twirp.official_id = official_id
 
-    print twirp
+    print str(twirp)
     twirp.to_database()
 
+def collect_tweet_data(api, user_id, since_id=None):
+    '''Feeding in the session, a user_id and possibly tweet id, this queries the 
+twitter API, instantiates a Tweet class with data and populates the database with 
+that tweet'''
+
+    for tweet_data in tweepy.Cursor(api.user_timeline, id=user_id).items(20):
+
+        #print tweet_data
+        try:
+            tweet = Tweet(tweet_data, 'twitter')
+            print tweet, '\n'
+            tweet.to_database()
+        except Exception, e:
+            print e
 
 
 def monitor_calls(api):
@@ -83,27 +98,74 @@ session expiration time, for a certain request, specified in the ar'''
                     indent=4, separators=(',', ': '))
     return ()
 
-def twirp_main(api):
+def get_twirps_main(api):
     complete_mp_list = return_twitter_list()
     fetched_mp_list = return_skip_list()
 
     remaining_mp_list = list(set(complete_mp_list)-set(fetched_mp_list))
 
-    print len(remaining_mp_list)
+    print remaining_mp_list 
 
     for mp_tuple in remaining_mp_list:
         try:
             collect_twirp_data(api, mp_tuple[1], mp_tuple[0])
-        except:
-            print 'yo'
+        except Exception, e:
+            print e
+
+def get_tweets_main(api):
+    pass
 
 
         
 class Tweet(object):
-    def __init__(self, tweet):
+    def __init__(self, tweet, source):
+        self.tweetid = 0
+        self.userid = 0
+        self.handle = ''
+        self.mention_ids = [] 
+        self.mention_handles = [] 
+        self.content = ''
+        self.retweet = 'NULL'
+        self.retweet_count = 0
+        self.favourite_count = 0
+        self.hashtags = []
+        self.date = ''
+        self.urls = []
+
+        if source=='twitter':
+            self.from_twitter(tweet)
+
+        elif source=='database':
+            self.from_database(tweet)
+
+    def from_twitter(self, tweet):
+        self.tweetid  = tweet.id
+        self.userid = tweet.user.id
+        self.handle = tweet.user.screen_name
+        self.mention_ids = [ ent['id'] for ent in tweet.entities['user_mentions'] ]
+        self.mention_handles = [ ent['screen_name'] for ent in tweet.entities['user_mentions']]
+        self.content = tweet.text
+        if tweet.retweeted:
+            self.retweet = tweet.retweeted_status['user']['id']
+        self.retweet_count = tweet.retweet_count
+        self.favourite_count  = tweet.favorite_count
+        self.hashtags =  [ent['text'] for ent in tweet.entities['hashtags']]
+        self.urls = [urls for urls in tweet.entities['urls']]
+
+        if tweet.in_reply_to_user_id != None:
+            self.mention_ids.append(tweet.in_reply_to_user_id)
+        if tweet.in_reply_to_screen_name != None:
+            self.mention_ids.append(tweet.in_reply_to_screen_name)
+
         pass
 
-    def parse_tweet(self, tweet):
+    def __str__(self):
+        return 'Tweet %d %s ||RC: %d FC:%d RT:%s||\n @ %s || # %s || Url %s\nContent: %s' %(
+            self.tweetid, self.handle, self.retweet_count, self.favourite_count,
+            self.retweet, str(self.mention_handles), str(self.hashtags), str(self.urls),
+            unicode(self.content) )
+
+    def from_database(self, tweet):
         pass
 
     def to_database(self):
@@ -167,12 +229,12 @@ class Twirp(object):
 
 if __name__ == '__main__':
     to_do_list = return_twitter_list()
-    print to_do_list
     session_api = authorize_twitter()
     create_twirpy_db()
 
-    twirp_main(session_api)
-    monitor_calls(session_api)
+    #get_twirps_main(session_api)
+    collect_tweet_data(session_api, 388954439)
+    #monitor_calls(session_api)
 
 
 

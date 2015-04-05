@@ -26,8 +26,9 @@ def create_twirpy_db():
                                                 TweetCount Number, RetweetCount Number, \
                                                 BeenRetweeted Number, FavouriteHashtag Text, \
                                                 HashtagCount Number, OfficialId Number)')
-            cur.execute('CREATE TABLE TweetEntities (TweetID Number, UserId Number,\
-                                                EntityType Text, Entity Text, ToUser Number)')
+            cur.execute('CREATE TABLE TweetEntities (TweetID Number, UserID Number,\
+                                                EntityType Text, Entity Text, ToUser Number,\
+                                                UNIQUE(TweetID, UserID, EntityType, Entity) )')
 
 
 def authorize_twitter():
@@ -141,11 +142,6 @@ class Tweet(object):
         self.userid = tweet.user.id
         self.handle = tweet.user.screen_name
         self.date = tweet.created_at
-        
-        
-
-
-            #tweet.retweeted_status['user']['id']
         self.retweet_count = tweet.retweet_count
         self.favourite_count  = tweet.favorite_count
         
@@ -183,17 +179,14 @@ class Tweet(object):
             cur.execute('INSERT OR REPLACE INTO TweetData\
                         VALUES (?,?,?,?,?,?,?,?) ', input_tuple)
             for h in self.hashtags:
-                cur.execute('INSERT INTO TweetEntities VALUES (?,?,?,?,0)',
+                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,0)',
                     (self.tweetid, self.userid, 'hashtag', h))
             for u in self.urls:
-                cur.execute('INSERT INTO TweetEntities VALUES (?,?,?,?,0)',
+                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,0)',
                     (self.tweetid, self.userid, 'url', u))
             for m in self.mentions:
-                cur.execute('INSERT INTO TweetEntities VALUES (?,?,?,?,?)',
+                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,?)',
                     (self.tweetid, self.userid, 'mention', m[1], m[0]))
-
-        
-
 
 
 class Twirp(object):
@@ -246,9 +239,6 @@ class Twirp(object):
 
     def from_database(self, user):
         pass
-
-
-
 
 if __name__ == '__main__':
     to_do_list = return_twitter_list()

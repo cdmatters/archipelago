@@ -114,7 +114,7 @@ def return_list_for_tweet_scan():
                 (twirp_tuple[0],))
             start_point = cur.fetchall()
 
-            if records[0][0] != twirp_tuple[1] and records[0][0]<3180:
+            if (twirp_tuple[1]-records[0][0]>30) and records[0][0]<3100:
                 remaining = 3200-records[0][0]
 
                 to_do_list.append((twirp_tuple[0], remaining, start_point[0][0]))
@@ -278,7 +278,7 @@ class Twirp(object):
 
 if __name__ == '__main__':
     to_do_list = return_twitter_list()
-    session_api = authorize_twitter()
+    #session_api = authorize_twitter()
     create_twirpy_db()
 
     #get_twirps_main(session_api)
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     #monitor_calls(session_api)
     get_tweets_main()
 
-    #print return_list_for_tweet_scan()
+    #print len(return_list_for_tweet_scan())
 
 
 

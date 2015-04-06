@@ -1,5 +1,17 @@
 #Specifics
+Twirps/tweepy_key.py
 .DS_Store
+
+# Sublime workspace
+*.sublime-project
+*.sublime-workspace 
+
+#json data
+*.json
+
+#ignore venv
+venv
+
 *.db
 TWFY_key.py
 profile_images/

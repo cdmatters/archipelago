@@ -59,14 +59,16 @@ def generate_hashtag_frequency_json():
 
     for name, user_id in stored_names:
         print name
+        retweets = select_retweet_ids_by_twirp(user_id)
         results[name] = {}
         tweet_list = select_entities_by_twirp(user_id, 'hashtag')
 
         for hashtag in tweet_list:
-            if hashtag[3].lower() in results[name].keys():
-                results[name][hashtag[3].lower()] +=1
-            else:
-                results[name][hashtag[3].lower()] =1
+            if hashtag[0] not in retweets: 
+                if hashtag[3].lower() in results[name].keys():
+                    results[name][hashtag[3].lower()] +=1
+                else:
+                    results[name][hashtag[3].lower()] =1
 
     with open('hashtag_freq.json', 'w+') as f:
         f.write(json.dumps(results))
@@ -143,6 +145,14 @@ def select_entities_by_twirp(user_id, entity):
         cur.execute('SELECT * FROM TweetEntities WHERE UserID=? AND EntityType=?', (user_id,entity))
         return cur.fetchall()
 
+def select_retweet_ids_by_twirp(user_id):
+    with sqlite3.connect('twirpy.db') as connection:
+        cur = connection.cursor()
+        cur.execute('SELECT TwitterID FROM TweetData \
+            WHERE UserID=? AND Retweet<>"NULL" AND Retweet<>"REPLY"', (user_id,))
+        results = cur.fetchall()
+        return [x[0] for x in results]
+
 
 def tally_retweets():
     pass
@@ -191,6 +201,8 @@ def main():
         generate_mention_frequency_json()
     elif words[1]=='top_10':
         return_top_10()
+    elif words[1]=='retweets':
+        select_retweet_ids_by_twirp()
     else:
         print 'bad arguments'
     

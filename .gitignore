@@ -6,8 +6,9 @@ Twirps/tweepy_key.py
 *.sublime-project
 *.sublime-workspace 
 
-#json data
+#json and text data
 *.json
+top_10.txt
 
 #ignore venv
 venv
@@ -19,6 +20,7 @@ profile_images/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+
 
 # C extensions
 *.so

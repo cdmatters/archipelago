@@ -29,12 +29,21 @@ def return_top_10():
         top_w = sorted_words[:10]
 
         if len(top_h)<10:
-            top_h.extend([()])
+            top_h.extend([(0,0)]*(10-len(top_h)))
+        if len(top_m)<10:
+            top_m.extend([(0,0)]*(10-len(top_m)))
+        if len(top_w)<10:
+            top_w.extend([(0,0)]*(10-len(top_w)))
+
+        template = "{0:5}|{1:25}{2:5}||{3:15}{4:5}||{5:15}{6:5}||"
     
-        print 'Hashtags:\t\tWords:\t\tMentions:'
+        print template.format('Order', 'HASHTAG','No.','WORDS','No.','MENTIONS','No.')
         for i in range(0,10):
-            print '%d) %s %d \t\t %s %d \t\t %s %d  ' %( 
-            i, top_h[i][0], top_h[i][1], top_w[i][0], top_w[i][1], top_m[i][0], top_m[i][1])
+            in_tuple = (i, top_h[i][0], top_h[i][1], top_w[i][0], top_w[i][1], top_m[i][0], top_m[i][1])
+            try:
+                print template.format(*in_tuple)
+            except:
+                print 'Error'
 
 
         print '\n\n\n'
@@ -54,10 +63,10 @@ def generate_hashtag_frequency_json():
         tweet_list = select_entities_by_twirp(user_id, 'hashtag')
 
         for hashtag in tweet_list:
-            if hashtag[3] in results[name].keys():
-                results[name][hashtag[3]] +=1
+            if hashtag[3].lower() in results[name].keys():
+                results[name][hashtag[3].lower()] +=1
             else:
-                results[name][hashtag[3]] =1
+                results[name][hashtag[3].lower()] =1
 
     with open('hashtag_freq.json', 'w+') as f:
         f.write(json.dumps(results))
@@ -102,10 +111,10 @@ def generate_mention_frequency_json():
         tweet_list = select_entities_by_twirp(user_id, 'mention')
 
         for mention in tweet_list:
-            if mention[3].lower() in results[name].keys():
-                results[name][mention[3].lower()] +=1
+            if mention[3] in results[name].keys():
+                results[name][mention[3]] +=1
             else:
-                results[name][mention[3].lower()] =1
+                results[name][mention[3]] =1
 
     with open('mention_freq.json', 'w+') as f:
         f.write(json.dumps(results))

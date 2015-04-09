@@ -1,9 +1,9 @@
 import sqlite3
-import time 
-import sys
-import json
+import time, sys, json, re 
 import unicodedata
 import operator
+import urlparse, httplib
+import requests
 
 START_TIME = time.time()
 
@@ -50,6 +50,64 @@ def return_top_10():
     lap_time()
 
 
+def unshorten_url(url):
+    parsed = urlparse.urlparse(url)
+    http_obj = httplib.HTTPConnection(parsed.netloc)
+    http_obj.request('HEAD', parsed.path)
+    response = http_obj.getresponse()
+    if response.status/100 == 3 and response.getheader('Location'):
+        return response.getheader('Location')
+    else:
+        return url
+
+def clean_up_urls():
+    with sqlite3.connect('twirpy.db') as connection:
+        cur = connection.cursor()
+        cur.execute('SELECT Entity, TweetID, UrlBase FROM TweetEntities WHERE EntityType="url"')
+        lap_time()
+        #results = 
+   # print len(results)
+
+    reg = re.compile('/{1}')
+
+    for i, (url, tweet_ID, url_base) in enumerate(cur.fetchall()):
+        print i, url, url_base
+        if url_base == None or url_base == '':
+            try: 
+                url = unshorten_url(url)
+            except:
+                print 'Error in Url Following'
+            try:
+                reg_result = reg.split(url)
+                url = reg_result[0]+'//'+reg_result[2]
+            except:
+                print 'Error in Regex'
+            with sqlite3.connect('twirpy.db') as connection:
+                cur = connection.cursor()
+                cur.execute('UPDATE TweetEntities SET UrlBase=?\
+                        WHERE TweetID=? AND EntityType="url"',(url, tweet_ID) )
+            print url
+        else:
+            print url_base
+
+                
+            
+        connection.commit()
+
+        lap_time()
+
+
+def generate_link_frequency_json():
+    stored_names = generate_stored_twirp_list()
+    results = {}
+
+    for name, user_id in stored_names:
+        print name
+        tweet_list = select_entities_by_twirp(user_id, 'url')
+
+        for url in tweet_list():
+            site = url[3]
+            
 
 
 
@@ -71,6 +129,28 @@ def generate_hashtag_frequency_json():
                     results[name][hashtag[3].lower()] =1
 
     with open('hashtag_freq.json', 'w+') as f:
+        f.write(json.dumps(results))
+    lap_time()
+
+
+def generate_mention_frequency_json():
+    stored_names = generate_stored_twirp_list()
+    results = {}
+
+    for name, user_id in stored_names:
+        print name
+        retweets = select_retweet_ids_by_twirp(user_id)
+        results[name] = {}
+        tweet_list = select_entities_by_twirp(user_id, 'mention')
+
+        for mention in tweet_list:
+            if mention[0] not in retweets:
+                if mention[3] in results[name].keys():
+                    results[name][mention[3]] +=1
+                else:
+                    results[name][mention[3]] =1
+
+    with open('mention_freq.json', 'w+') as f:
         f.write(json.dumps(results))
     lap_time()
     pass
@@ -102,28 +182,6 @@ def generate_word_frequency_json():
         f.write(json.dumps(results))
     lap_time()
     pass
-
-def generate_mention_frequency_json():
-    stored_names = generate_stored_twirp_list()
-    results = {}
-
-    for name, user_id in stored_names:
-        print name
-        results[name] = {}
-        tweet_list = select_entities_by_twirp(user_id, 'mention')
-
-        for mention in tweet_list:
-            if mention[3] in results[name].keys():
-                results[name][mention[3]] +=1
-            else:
-                results[name][mention[3]] =1
-
-    with open('mention_freq.json', 'w+') as f:
-        f.write(json.dumps(results))
-    lap_time()
-    pass
-
-
 
 
 def generate_stored_twirp_list():
@@ -203,6 +261,8 @@ def main():
         return_top_10()
     elif words[1]=='retweets':
         select_retweet_ids_by_twirp()
+    elif words[1]=='clean_urls':
+        clean_up_urls()
     else:
         print 'bad arguments'
     

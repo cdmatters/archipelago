@@ -27,7 +27,7 @@ def create_twirpy_db():
                                                 HashtagCount Number, OfficialId Number)')
             cur.execute('CREATE TABLE TweetEntities (TweetID Number, UserID Number,\
                                                 EntityType Text, Entity Text, ToUser Number,\
-                                                UNIQUE(TweetID, UserID, EntityType, Entity) )')
+                                                UrlBase Text, UNIQUE(TweetID, UserID, EntityType, Entity) )')
 
 
 def authorize_twitter():
@@ -214,13 +214,13 @@ class Tweet(object):
             cur.execute('INSERT OR REPLACE INTO TweetData\
                         VALUES (?,?,?,?,?,?,?,?) ', input_tuple)
             for h in self.hashtags:
-                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,0)',
+                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,0,NULL)',
                     (self.tweetid, self.userid, 'hashtag', h))
             for u in self.urls:
-                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,0)',
+                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,0,NULL)',
                     (self.tweetid, self.userid, 'url', u))
             for m in self.mentions:
-                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,?)',
+                cur.execute('INSERT OR REPLACE INTO TweetEntities VALUES (?,?,?,?,?,NULL)',
                     (self.tweetid, self.userid, 'mention', m[1], m[0]))
 
 

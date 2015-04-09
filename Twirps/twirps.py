@@ -4,10 +4,8 @@
 from __future__ import unicode_literals
 import sqlite3
 import requests
-import time
+import time, json, os, sys
 import tweepy
-import json
-import os
 import tweepy_key as tk
 
 
@@ -29,6 +27,8 @@ def create_twirpy_db():
                                                 EntityType Text, Entity Text, ToUser Number,\
                                                 UrlBase Text, UNIQUE(TweetID, UserID, EntityType, Entity) )')
 
+            cur.execute('CREATE INDEX UserIDIndex ON TweetData (UserID)')
+            cur.execute('CREATE INDEX UserIDEntityIndex ON TweetEntities (UserID)')
 
 def authorize_twitter():
     '''Authorizes the session for access to twitter API'''
@@ -109,6 +109,7 @@ def return_list_for_tweet_scan():
             cur.execute('SELECT COUNT(TwitterID) FROM TweetData WHERE UserID =?',
                 (twirp_tuple[0],))
             records = cur.fetchall()
+
             cur.execute('SELECT MIN(TwitterID) FROM TweetData WHERE UserID=?',
                 (twirp_tuple[0],))
             start_point = cur.fetchall()
@@ -142,11 +143,13 @@ def get_tweets_main():
         api = authorize_twitter()
         try:
             to_do = return_list_for_tweet_scan()
+
             for target in to_do:
+                print target
                 collect_tweet_data(api, target[0], no_of_items=target[1], max_id=target[2])
         except Exception, e:
             print e
-            time.sleep(15*61)
+            time.sleep(15*60)
             continue
 
 
@@ -275,17 +278,25 @@ class Twirp(object):
     def from_database(self, user):
         pass
 
+
+def main():
+    words = sys.argv
+    if len(words) ==1:
+        print 'print arg: [get_twirps, get_tweets]'
+    elif words[1]=='get_twirps':
+        session_api = authorize_twitter()
+        get_tweets_main(session_api)
+    elif words[1]=='get_tweets':
+        get_tweets_main()
+    elif words[1]=='to_do_list':
+        return_list_for_tweet_scan()
+
+
+    else:
+        print 'bad arguments'
+
 if __name__ == '__main__':
-    to_do_list = return_twitter_list()
-    #session_api = authorize_twitter()
-    create_twirpy_db()
-
-    #get_twirps_main(session_api)
-    #collect_tweet_data(session_api, 388954439)
-    #monitor_calls(session_api)
-    get_tweets_main()
-
-    #print len(return_list_for_tweet_scan())
+    main()
 
 
 

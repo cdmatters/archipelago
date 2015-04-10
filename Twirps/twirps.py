@@ -8,6 +8,7 @@ import time, json, os, sys
 import tweepy
 import tweepy_key as tk
 
+START_TIME = time.time()
 
 def create_twirpy_db():
     '''Creates a database with tables for TweetData and TwirpData'''
@@ -87,16 +88,12 @@ that tweet'''
         except:
             continue
 
+def lap_time():
+    '"a glance at the wristwatch" since the program started'
+    lap = time.time()
+    print '---%s s ---' %(START_TIME-lap)
+    return time.time()
 
-
-def monitor_calls(api):
-    '''This function will return the number of requests remaining and the 
-session expiration time, for a certain request, specified in the ar'''
-
-    monitor = api.rate_limit_status()
-    print json.dumps(monitor, sort_keys=True,
-                    indent=4, separators=(',', ': '))
-    return ()
 
 def return_list_for_tweet_scan():
     to_do_list = []
@@ -104,20 +101,27 @@ def return_list_for_tweet_scan():
         cur = connection.cursor()
         cur.execute('SELECT UserID, TweetCount FROM TwirpData')
         twirp_list = cur.fetchall()
+        lap_time()
 
-        for twirp_tuple in twirp_list:
+        for i, (twirp_tuple) in enumerate(twirp_list):
+
             cur.execute('SELECT COUNT(TwitterID) FROM TweetData WHERE UserID =?',
                 (twirp_tuple[0],))
             records = cur.fetchall()
 
             cur.execute('SELECT MIN(TwitterID) FROM TweetData WHERE UserID=?',
                 (twirp_tuple[0],))
-            start_point = cur.fetchall()
+            start_point= cur.fetchall()
+            if i%2==0:
+                print 'Analysed %d records\r' %i,
+
 
             if (twirp_tuple[1]-records[0][0]>30) and records[0][0]<3100:
                 remaining = 3200-records[0][0]
 
                 to_do_list.append((twirp_tuple[0], remaining, start_point[0][0]))
+
+        print
 
     return to_do_list
 
@@ -289,7 +293,11 @@ def main():
     elif words[1]=='get_tweets':
         get_tweets_main()
     elif words[1]=='to_do_list':
-        return_list_for_tweet_scan()
+        print return_list_for_tweet_scan()
+        lap_time()
+    elif words[1]=='init_db':
+        create_twirpy_db()
+
 
 
     else:

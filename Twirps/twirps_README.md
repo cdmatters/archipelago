@@ -1,5 +1,8 @@
 #TWIRPS
 
+*MIGRATION ALERT: This repo is deprecated and can now be found [here](https://github.com/condnsdmatters/twirps)*
+
+
 Twirps provides two main functionalities at present:
 
 1. The mass collection of tweets from mps into a structured database
@@ -7,3 +10,4 @@ Twirps provides two main functionalities at present:
 
 ##Requirements
 A twitter api oauth is required, available from the twitter dev website
+

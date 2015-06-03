@@ -1,4 +1,4 @@
-#*Untitled* Parliament Project
+#*Untitled* Parliament Project 
 
 This repository contains code for the creation and 
 population of MP's data, both from the GOV.UK and 
@@ -23,9 +23,11 @@ small official photos of every MP
 
 ###Twirps
 
+*All work has migrated from the subdirectory here to the repo [here](https://github.com/condnsdmatters/twirps)*
+
 This project populates a database of tweets from MPs
-and provides analysis on them. Read **twirps_README.md**
-for further info.
+and provides analysis on them.
+
 
 
 ##IDEAS:

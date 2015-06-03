@@ -7,8 +7,8 @@ Twirps/tweepy_key.py
 *.sublime-workspace 
 
 #json and text data
-*.json
-top_10.txt
+.json
+*.txt
 
 #ignore venv
 venv

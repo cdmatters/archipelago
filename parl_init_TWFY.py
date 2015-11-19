@@ -6,6 +6,7 @@ from lxml import etree
 import os
 import TWFY_key  #a file; only contains:  key = 'your_key_string'
 import time
+import json
 
 
 ##############
@@ -13,6 +14,7 @@ key = TWFY_key.key
 output = 'xml'
 site= 'http://www.theyworkforyou.com/'
 base = 'api/%s?key=%s&output=%s' % ('%s', key, output)
+base_template = 'api/%s?key=%s&output=%s'
 ##############
 
 
@@ -24,6 +26,22 @@ def fetch_xml_online(base_arg, bonus_arg=''):
     data_xml = etree.fromstring(data_req_string)
 
     return data_xml
+
+def fetch_data_online(request_type, bonus_arg='', output='json'):
+    url = site + base_template%(request_type, key, output) + bonus_arg
+
+    data_request = requests.get(url)
+    data_req_string = data_request.text
+    
+    fetched_data = None
+    if output == 'json':
+        fetched_data = json.loads(data_req_string, 'unicode')
+    if output == 'xml':
+        fetched_data = etree.fromstring(data_req_string)
+        fetched_data
+    return fetched_data
+
+def convert_xml_to_json
 
 def load_constituencies():
     constit_xml = fetch_xml_online('getConstituencies')

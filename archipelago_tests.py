@@ -57,6 +57,81 @@ class TestFetchDataMethods(unittest.TestCase):
         # test number of responses
         self.assertEqual( len(request_data), 8)
 
+    def test_build_mp_and_office_tuple_list(self):
+
+        test_data = [ 
+            {
+                "name": "Mark Williams",
+                "office": 
+                    [   
+                        {
+                        "dept": "Welsh Affairs Committee",
+                        "from_date": "2015-07-13", 
+                        "to_date": "9999-12-31", 
+                        "position": "Member"
+                        },
+                        {
+                        "dept": "Foreign Office",
+                        "from_date": "2015-07-13", 
+                        "to_date": "9999-12-31", 
+                        "position": "Foreign Secretary"
+                        }
+                    ],
+                "member_id": "40728", 
+                "person_id": "11489", 
+                "party": "Liberal Democrat",
+                "constituency": "Ceredigion"
+            },
+            {   
+                "name": "William Marks",
+                "office": [],
+                "member_id": "40730", 
+                "person_id": "11491", 
+                "party": "Labour",
+                "constituency": "York Outer"
+            }
+        ]
+        
+        test_reference = (
+            [
+                (
+                    "Mark Williams",
+                    "Liberal Democrat", 
+                    40728, 
+                    11489,
+                    "Ceredigion"
+                ),(
+                    "William Marks",
+                    "Labour", 
+                    40730, 
+                    11491,
+                    "York Outer"
+                ) 
+            ],
+            [
+                (
+                    11489,
+                    "Welsh Affairs Committee",
+                    "2015-07-13",
+                    "9999-12-31",
+                    "Mark Williams",
+                    "Member"
+                ),(
+                    11489,
+                    "Foreign Office",
+                    "2015-07-13", 
+                    "9999-12-31", 
+                    "Mark Williams",
+                    "Foreign Secretary"
+                )
+            ]
+        )
+
+        processed_data = parl_init_TWFY.build_mp_and_office_lists(test_data)
+
+        self.assertEqual(processed_data, test_reference)
+
+
 class TestDatabaseMethods(unittest.TestCase):
     def setUp(self):
         self.test_db = "test.db"
@@ -91,10 +166,35 @@ class TestDatabaseMethods(unittest.TestCase):
             
             self.assertEqual( loaded_constituencies[-11:], test_reference)
 
+    def test_load_mp_details(self):
 
+        parl_init_TWFY.load_constituencies(self.test_db) # isolated and tested separately
 
+        parl_init_TWFY.load_mp_details(self.test_db)
 
+        with sqlite3.connect(self.test_db) as connection:
+            cur = connection.cursor()
+            cur.execute("SELECT * FROM MPCommons")
+
+            loaded_mps = cur.fetchall()
+            print loaded_mps
+            mp_test_reference = [
+                (None, u'Worsley and Eccles South', 0, None, None, 0, 0, 0),
+                (None, u'Worthing West', 0, None, None, 0, 0, 0),
+
+            ]
+
+            self.assertEqual( loaded_mps[-4:], mp_test_reference )
+
+            cur.execute("SELECT * FROM Offices")
+            loaded_offices = cur.fetchall()
+
+            print loaded_offices
+            offices_test_reference = [
+            ]
+
+            self.assertEqual( loaded_officess[-4:], offices_test_reference )
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

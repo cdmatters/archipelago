@@ -16,7 +16,7 @@ def create_database(dbname='parl.db'):
                                             Party Text, ImageUrl Text, MemberId Number,\
                                             PersonId Number, OfficialId Number)")
         cur.execute("CREATE TABLE Offices  (PersonId Number, Office Text,\
-                                            StartDate Text, EndDate Text, Name Text)")
+                                            StartDate Text, EndDate Text, Name Text, Title Text)")
         cur.execute("CREATE TABLE Addresses (OfficialId Number, Type Text, Address Text)")
 
 

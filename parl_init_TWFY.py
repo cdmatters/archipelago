@@ -41,11 +41,8 @@ def fetch_data_online(request_type, bonus_arg='', output='json'):
 
 
 def load_constituencies(database='parl.db'):
-    constit_xml = fetch_xml_online('getConstituencies')
-    constituencies = []
-
-    for c in constit_xml.findall('match'):
-        constituencies.append((c.find('name').text,)) #tuple for 'executemany' statement
+    constituencies_json = fetch_data_online('getConstituencies')
+    constituencies = [(c["name"],) for c in constituencies_json] #tuple for 'executemany' statement
     
     with sqlite3.connect(database) as connection:
         cur = connection.cursor()
@@ -53,6 +50,34 @@ def load_constituencies(database='parl.db'):
         cur.executemany("INSERT INTO MPCommons \
                         VALUES(null,?, 0, null,null,0,0,0)", constituencies)
         connection.commit()
+
+def build_mp_and_office_lists(mp_details_json):
+
+    mp_details = [
+        (
+            mp["name"],
+            mp["party"],
+            int(mp["member_id"]),
+            int(mp["person_id"]),
+            mp["constituency"]
+        ) 
+        for mp in mp_details_json
+    ]
+
+    office_details = [
+        (
+            int(mp["person_id"]),
+            office["dept"],
+            office["from_date"],
+            office["to_date"],
+            mp["name"],
+            office["position"]
+        ) 
+        for mp in mp_details_json 
+        for office in mp["office"] ]
+
+    return (mp_details, office_details)
+    
 
 def return_mp_and_office_details_from_xml(mp_xml):
     mps_list = []
@@ -86,12 +111,13 @@ def return_mp_and_office_details_from_xml(mp_xml):
                                 ))
     return (mps_list, offices_list)
 
-def load_mp_details():  
+
+def load_mp_details(database='parl.db'):  
     mps_list = []
     offices_list = []
 
-    parties = ['conservative', 'labour', 'liberal democrat', 'green', 'independent', 'ukip',
-                    'DUP', 'sinn fein', 'sdlp', 'plaid cymru', 'scottish national party']
+    parties = ['conservative', 'labour', 'liberal', 'green', 'independent', 'ukip',
+                    'DUP', 'sinn fein', 'sdlp', 'plaid', 'scottish']
     
     #collate details from major parties & insert names into db
     for party in parties:
@@ -102,7 +128,7 @@ def load_mp_details():
             mps_list.extend(party_mps)
             offices_list.extend(party_offices)
       
-    with sqlite3.connect('parl.db') as connection:
+    with sqlite3.connect(database) as connection:
         cur = connection.cursor()
         cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
                         WHERE Constituency=?', mps_list)  

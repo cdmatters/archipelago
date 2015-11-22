@@ -7,10 +7,10 @@ import parl_init_TWFY as pi_TWFY
 import parl_init_GOV as pi_GOV
 
 
-def create_database():
-    if os.path.isfile('parl.db'):
-        os.remove('parl.db')
-    with sqlite3.connect('parl.db') as connection:
+def create_database(dbname='parl.db'):
+    if os.path.isfile(dbname):
+        os.remove(dbname)
+    with sqlite3.connect(dbname) as connection:
         cur = connection.cursor()
         cur.execute("CREATE TABLE MPCommons (Name Text, Constituency Text, MP Boolean,\
                                             Party Text, ImageUrl Text, MemberId Number,\

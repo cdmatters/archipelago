@@ -36,21 +36,18 @@ def fetch_data_online(request_type, bonus_arg='', output='json'):
     fetched_data = None
     if output == 'json':
         fetched_data = json.loads(data_req_string, 'unicode')
-    if output == 'xml':
-        fetched_data = etree.fromstring(data_req_string)
-        fetched_data
+    # add functionality for xml if necessary & time 
     return fetched_data
 
-def convert_xml_to_json
 
-def load_constituencies():
+def load_constituencies(database='parl.db'):
     constit_xml = fetch_xml_online('getConstituencies')
     constituencies = []
 
     for c in constit_xml.findall('match'):
         constituencies.append((c.find('name').text,)) #tuple for 'executemany' statement
     
-    with sqlite3.connect('parl.db') as connection:
+    with sqlite3.connect(database) as connection:
         cur = connection.cursor()
         cur.execute('DELETE from MPCommons')
         cur.executemany("INSERT INTO MPCommons \

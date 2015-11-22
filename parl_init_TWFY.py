@@ -52,7 +52,7 @@ def load_constituencies(database='parl.db'):
         connection.commit()
 
 def build_mp_and_office_lists(mp_details_json):
-
+    # this could be a one liner fn. don't.
     mp_details = [
         (
             mp["name"],
@@ -74,10 +74,12 @@ def build_mp_and_office_lists(mp_details_json):
             office["position"]
         ) 
         for mp in mp_details_json 
+        if "office" in mp.keys()
         for office in mp["office"] ]
 
     return (mp_details, office_details)
     
+
 
 def return_mp_and_office_details_from_xml(mp_xml):
     mps_list = []
@@ -121,12 +123,11 @@ def load_mp_details(database='parl.db'):
     
     #collate details from major parties & insert names into db
     for party in parties:
-        mps_xml = fetch_xml_online('getMPs', '&party=%s'%party)
-        for mp_xml in mps_xml.findall('match'):
-            party_mps, party_offices = return_mp_and_office_details_from_xml(mp_xml)
-            
-            mps_list.extend(party_mps)
-            offices_list.extend(party_offices)
+        mps_and_offices_json = fetch_data_online("getMPs", "&party=%s"%party)
+        party_mps, party_offices = build_mp_and_office_lists(mps_and_offices_json)
+
+        mps_list.extend(party_mps)
+        offices_list.extend(party_offices)
       
     with sqlite3.connect(database) as connection:
         cur = connection.cursor()
@@ -139,14 +140,20 @@ def load_mp_details(database='parl.db'):
         empty_seats = cur.fetchall()
         
         for seat in empty_seats:
-            seat_xml = fetch_xml_online('getMP', '&constituency=%s'%seat)
-            mp, office = return_mp_and_office_details_from_xml(seat_xml)
+            seat_json = fetch_data_online('getMP', '&constituency=%s'%seat)
+            
+            if "error" in seat_json.keys():
+                print seat_json["error"]
+                print "***WARNING***: Check by-election for: %s" % seat[0]
+                continue
+            seat_json["name"] = seat_json["full_name"]
+            mp, office = build_mp_and_office_lists([seat_json])
 
             mps_list.extend(mp)
             offices_list.extend(office)
 
     #input remaining data and offices into databases
-        cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?)', offices_list)
+        cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?,?)', offices_list)
         cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
                         WHERE Constituency=?', mps_list)
         connection.commit()

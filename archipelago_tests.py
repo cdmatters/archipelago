@@ -84,13 +84,14 @@ class TestFetchDataMethods(unittest.TestCase):
             },
             {   
                 "name": "William Marks",
-                "office": [],
                 "member_id": "40730", 
                 "person_id": "11491", 
                 "party": "Labour",
                 "constituency": "York Outer"
             }
         ]
+
+        processed_data = parl_init_TWFY.build_mp_and_office_lists(test_data)
         
         test_reference = (
             [
@@ -126,8 +127,6 @@ class TestFetchDataMethods(unittest.TestCase):
                 )
             ]
         )
-
-        processed_data = parl_init_TWFY.build_mp_and_office_lists(test_data)
 
         self.assertEqual(processed_data, test_reference)
 
@@ -177,23 +176,27 @@ class TestDatabaseMethods(unittest.TestCase):
             cur.execute("SELECT * FROM MPCommons")
 
             loaded_mps = cur.fetchall()
-            print loaded_mps
             mp_test_reference = [
-                (None, u'Worsley and Eccles South', 0, None, None, 0, 0, 0),
-                (None, u'Worthing West', 0, None, None, 0, 0, 0),
-
+                (u'Mike Kane', u'Wythenshawe and Sale East', 1, u'Labour', None, 40912, 25220, 0), 
+                (u'Marcus Fysh', u'Yeovil', 1, u'Conservative', None, 41102, 25384, 0), 
+                (u'Albert Owen', u'Ynys M\xf4n', 1, u'Labour', None, 40873, 11148, 0), 
+                (u'Rachael Maskell', u'York Central', 1, u'Labour/Co-operative', None, 41325, 25433, 0), 
+                (u'Julian Sturdy', u'York Outer', 1, u'Conservative', None, 41326, 24853, 0)
             ]
 
-            self.assertEqual( loaded_mps[-4:], mp_test_reference )
+            self.assertEqual( loaded_mps[-5:], mp_test_reference )
 
-            cur.execute("SELECT * FROM Offices")
+            cur.execute("SELECT * FROM Offices WHERE Name='John Bercow'")
             loaded_offices = cur.fetchall()
 
-            print loaded_offices
             offices_test_reference = [
+                (10040, u"Speaker's Committee for the Independent Parliamentary Standards Authority", u'2015-05-18', u'9999-12-31', u'John Bercow', u'Chair'), 
+                (10040, u"Speaker's Committee on the Electoral Commission", u'2015-03-30', u'9999-12-31', u'John Bercow', u'Member'), 
+                (10040, u'', u'2009-06-22', u'9999-12-31', u'John Bercow', u'Speaker of the House of Commons'), 
+                (10040, u'House of Commons Commission', u'2009-06-22', u'9999-12-31', u'John Bercow', u'Member')
             ]
 
-            self.assertEqual( loaded_officess[-4:], offices_test_reference )
+            self.assertEqual( loaded_offices[-4:], offices_test_reference )
 
 
 if __name__ == '__main__':

@@ -17,16 +17,6 @@ base = 'api/%s?key=%s&output=%s' % ('%s', key, output)
 base_template = 'api/%s?key=%s&output=%s'
 ##############
 
-
-def fetch_xml_online(base_arg, bonus_arg=''):
-    url = site + base%base_arg + bonus_arg
-    
-    data_request = requests.get(url)
-    data_req_string = data_request.content
-    data_xml = etree.fromstring(data_req_string)
-
-    return data_xml
-
 def fetch_data_online(request_type, bonus_arg='', output='json'):
     url = site + base_template%(request_type, key, output) + bonus_arg
 
@@ -78,41 +68,6 @@ def build_mp_and_office_lists(mp_details_json):
         for office in mp["office"] ]
 
     return (mp_details, office_details)
-    
-
-
-def return_mp_and_office_details_from_xml(mp_xml):
-    mps_list = []
-    offices_list = []
-
-    name_xml = mp_xml.find('name')
-    if name_xml is None:
-        name_xml = mp_xml.find('full_name')
-
-    mps_list.append((
-                    name_xml.text, 
-                    mp_xml.find('party').text,
-                    int(mp_xml.find('member_id').text),
-                    int(mp_xml.find('person_id').text),
-                    mp_xml.find('constituency').text,
-                    ))
-
-    if mp_xml.find('office') is not None:
-        jobs = mp_xml.find('office')
-        for job in jobs.findall('match'):
-            title = job.find('position').text
-            if title == None:
-                title = job.find('dept').text
-                
-            offices_list.append((
-                                int(mp_xml.find('person_id').text),
-                                title,
-                                job.find('from_date').text,
-                                job.find('to_date').text,
-                                name_xml.text,
-                                ))
-    return (mps_list, offices_list)
-
 
 def load_mp_details(database='parl.db'):  
     mps_list = []
@@ -135,7 +90,7 @@ def load_mp_details(database='parl.db'):
                         WHERE Constituency=?', mps_list)  
         mps_list = []
 
-    #collate details from minor parties 
+        #collate details from minor parties 
         cur.execute('SELECT Constituency FROM MPCommons WHERE MP=0')
         empty_seats = cur.fetchall()
         
@@ -152,7 +107,7 @@ def load_mp_details(database='parl.db'):
             mps_list.extend(mp)
             offices_list.extend(office)
 
-    #input remaining data and offices into databases
+        #input remaining data and offices into databases
         cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?,?)', offices_list)
         cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
                         WHERE Constituency=?', mps_list)

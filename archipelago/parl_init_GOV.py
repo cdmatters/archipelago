@@ -38,7 +38,7 @@ def populate_addresses_from_constituency(const):
     with sqlite3.connect('parl.db') as connection:
         cur = connection.cursor()
         cur.execute('UPDATE MPCommons SET OfficialId=? WHERE Constituency=?', (official_ID,const))
-           
+
         for address_xml in addresses_xml:
             atype, address = '',''
             if address_xml.get('Type_Id')=='6':  #web info

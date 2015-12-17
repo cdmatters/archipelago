@@ -1,5 +1,5 @@
-import parl_init_TWFY
-import main_setup
+from archipelago import parl_init_TWFY, main_setup, parl_init_GOV
+
 
 import unittest
 import sqlite3
@@ -197,6 +197,12 @@ class TestDatabaseMethods(unittest.TestCase):
             ]
 
             self.assertEqual( loaded_offices[-4:], offices_test_reference )
+
+    def test_populate_constitency(self):
+        pass
+
+    def test_populate_addresses_from_constituency(self):
+        pass
 
 
 if __name__ == '__main__':

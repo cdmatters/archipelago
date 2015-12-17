@@ -8,5 +8,8 @@ setup(name='archipelago',
       author_email='ehambro@gmail.com',
       license='MIT',
       packages=['archipelago'],
-      zip_safe=False
-      )
+      install_requires=['requests', 'lxml'],
+      zip_safe=False,
+      test_suite='nose.collector',
+      tests_require=['nose']     
+     )

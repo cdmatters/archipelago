@@ -4,13 +4,30 @@ import sqlite3
 import requests
 from lxml import etree
 import os
-import TWFY_key  #a file; only contains:  key = 'your_key_string'
 import time
 import json
 
 
+def load_TWFY_key():
+    TWFY_help = '''
+    Archipelago requires an API key to collect data from TheyWorkForYou:
+    This can be obtained at http://www.theyworkforyou.com/api/key
+    Please enter key here: '''
+
+    if not os.environ.get('TWFY_KEY'):
+        
+        if os.path.isfile('TWFY_key'):
+            with open('TWFY_key', 'r') as f:
+                os.environ['TWFY_KEY'] = f.read()
+        else:
+            TWFY_key = raw_input( TWFY_help )
+            os.environ['TWFY_KEY'] = TWFY_key
+            with open('TWFY_key', 'w') as f:
+                f.write(TWFY_key)
+
+load_TWFY_key()
 ##############
-key = TWFY_key.key
+key = os.environ['TWFY_KEY']
 output = 'xml'
 site= 'http://www.theyworkforyou.com/'
 base = 'api/%s?key=%s&output=%s' % ('%s', key, output)
@@ -141,6 +158,11 @@ def TWFY_setup():
     load_mp_details()
     load_images_for_imageless_mps()
     print 'TWFY Setup in %ds'%(time.time()-start)
+
+
+
+
+
 
 if __name__ == '__main__':
     TWFY_setup()

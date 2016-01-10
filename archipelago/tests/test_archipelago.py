@@ -1,15 +1,14 @@
 from archipelago import parl_init_TWFY, main_setup, parl_init_GOV
 
-
 import unittest
 import sqlite3
 import json
 import os
 
 
-class TestFetchDataMethods(unittest.TestCase):
+class TestFetchDataMethods_TWFY(unittest.TestCase):
     def test_constituencies_json_api(self):
-        request_data = []
+        '''Test the TFWY API functions in returning consistuencies'''
 
         request_data = parl_init_TWFY.fetch_data_online('getConstituencies', output='json')
 
@@ -28,8 +27,8 @@ class TestFetchDataMethods(unittest.TestCase):
         self.assertEqual( request_data[-3]["name"], u'Ynys M\xf4n') #Ynys Mon w circumflex
 
     def test_mp_and_office_json_api(self):
-        request_data = []
-
+        '''Test the TFWY API returns the correct number of MPs and a full example'''
+        
         request_data = parl_init_TWFY.fetch_data_online('getMPs', '&party=Liberal')
 
         test_reference = [
@@ -58,6 +57,8 @@ class TestFetchDataMethods(unittest.TestCase):
         self.assertEqual( len(request_data), 8)
 
     def test_build_mp_and_office_tuple_list(self):
+        ''' Test the MPandOffice tuple list is build correctly, 
+        starting with TWFY API output'''
 
         test_data = [ 
             {
@@ -131,7 +132,7 @@ class TestFetchDataMethods(unittest.TestCase):
         self.assertEqual(processed_data, test_reference)
 
 
-class TestDatabaseMethods(unittest.TestCase):
+class TestLoadDatabaseMethods(unittest.TestCase):
     def setUp(self):
         self.test_db = "test.db"
         main_setup.create_database(self.test_db)
@@ -140,6 +141,7 @@ class TestDatabaseMethods(unittest.TestCase):
         os.remove(self.test_db)
 
     def test_load_constituencies(self):
+        '''Test the load_constituencies method correctly loads into a test database'''
 
         parl_init_TWFY.load_constituencies(self.test_db)
 
@@ -166,8 +168,11 @@ class TestDatabaseMethods(unittest.TestCase):
             self.assertEqual( loaded_constituencies[-11:], test_reference)
 
     def test_load_mp_details(self):
-
-        parl_init_TWFY.load_constituencies(self.test_db) # isolated and tested separately
+        '''Load_constituencies as setUp, and test mp details (general and committees)
+        have loaded correctly into test db '''
+        # SetUp: Load constituencies.    Note: method had been tested separately
+        parl_init_TWFY.load_constituencies(self.test_db) 
+        # End of SetUp
 
         parl_init_TWFY.load_mp_details(self.test_db)
 
@@ -183,7 +188,8 @@ class TestDatabaseMethods(unittest.TestCase):
                 (u'Rachael Maskell', u'York Central', 1, u'Labour/Co-operative', None, 41325, 25433, 0), 
                 (u'Julian Sturdy', u'York Outer', 1, u'Conservative', None, 41326, 24853, 0)
             ]
-
+            
+            # Test MPs general data has loaded
             self.assertEqual( loaded_mps[-5:], mp_test_reference )
 
             cur.execute("SELECT * FROM Offices WHERE Name='John Bercow'")
@@ -195,15 +201,77 @@ class TestDatabaseMethods(unittest.TestCase):
                 (10040, u'', u'2009-06-22', u'9999-12-31', u'John Bercow', u'Speaker of the House of Commons'), 
                 (10040, u'House of Commons Commission', u'2009-06-22', u'9999-12-31', u'John Bercow', u'Member')
             ]
-
+            
+            # Test MPs committess data has loaded
             self.assertEqual( loaded_offices[-4:], offices_test_reference )
 
-    def test_populate_constitency(self):
-        pass
-
     def test_populate_addresses_from_constituency(self):
+        
         pass
 
+class TestDatabaseAccessorMethods(unittest.TestCase):
+    def setUp(self):
+        self.test_db = "test.db"
+
+        # Build test database with refernce data to test accessors
+        main_setup.create_database(self.test_db)
+        parl_init_TWFY.load_constituencies(self.test_db) 
+
+        test_reference = (
+            [
+                (
+                    "Mark Williams",
+                    "Liberal Democrat", 
+                    40728, 
+                    11489,
+                    "Ceredigion"
+                ),(
+                    "William Marks",
+                    "Labour", 
+                    40730, 
+                    11491,
+                    "York Outer"
+                ) 
+            ],
+            [
+                (
+                    11489,
+                    "Welsh Affairs Committee",
+                    "2015-07-13",
+                    "9999-12-31",
+                    "Mark Williams",
+                    "Member"
+                ),(
+                    11489,
+                    "Foreign Office",
+                    "2015-07-13", 
+                    "9999-12-31", 
+                    "Mark Williams",
+                    "Foreign Secretary"
+                )
+            ]
+        )
+        with sqlite3.connect(self.test_db) as connection:       
+            cur = connection.cursor()
+            cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
+                            WHERE Constituency=?', test_reference[0])  
+            cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?,?)', test_reference[1])
+            
+
+    def tearDown(self):
+        os.remove(self.test_db)
+
+    def test_return_constituency_list(self):
+        '''Test all constituencies returned''' 
+        constituency_list = parl_init_GOV.return_constituency_list(self.test_db)
+
+        start_constituencies = [u'Aberavon', u'Aberconwy', u'Aberdeen North']
+        end_constituencies =  [u'Ynys M\xf4n', u'York Central', u'York Outer']
+ 
+        # Test correct 
+        self.assertEqual(len(constituency_list), 650 )
+        self.assertEqual( start_constituencies, constituency_list[:3] )
+        self.assertEqual( end_constituencies, constituency_list[-3:] )
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

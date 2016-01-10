@@ -3,6 +3,7 @@ import requests
 from lxml import etree
 import os
 import time
+import json
 
 ###########################
 site = 'http://data.parliament.uk/membersdataplatform/services/mnis/'
@@ -18,9 +19,8 @@ def fetch_xml_online(request, api='members/query/', output=''):
 
     return data_xml
 
-def return_constituency_list():
-
-    with sqlite3.connect('parl.db') as connection:
+def return_constituency_list(database='parl.db'):
+    with sqlite3.connect(database) as connection:
         cur = connection.cursor()
         cur.execute('SELECT Constituency FROM MPCommons')
 
@@ -51,7 +51,6 @@ def populate_addresses_from_constituency(const):
             if atype != '':
                 cur.execute('INSERT INTO Addresses VALUES(?,?,?)', (official_ID,atype,address))
 
-        
 
 def GOV_setup():
     start = time.time()

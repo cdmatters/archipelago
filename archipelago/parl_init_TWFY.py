@@ -28,7 +28,7 @@ def load_TWFY_key():
 load_TWFY_key()
 ##############
 key = os.environ['TWFY_KEY']
-output = 'xml'
+output = 'json'
 site= 'http://www.theyworkforyou.com/'
 base = 'api/%s?key=%s&output=%s' % ('%s', key, output)
 base_template = 'api/%s?key=%s&output=%s'
@@ -49,6 +49,7 @@ def fetch_data_online(request_type, bonus_arg='', output='json'):
 
 def load_constituencies(database='parl.db'):
     constituencies_json = fetch_data_online('getConstituencies')
+
     constituencies = [(c["name"],) for c in constituencies_json] #tuple for 'executemany' statement
     
     with sqlite3.connect(database) as connection:

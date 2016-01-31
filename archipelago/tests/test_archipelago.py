@@ -3,10 +3,11 @@ from archipelago import parl_init_TWFY, main_setup, parl_init_GOV
 import unittest
 import sqlite3
 import json
+from lxml import etree
 import os
 
 
-class TestFetchDataMethods_TWFY(unittest.TestCase):
+class TestFetchDataMethods(unittest.TestCase):
     def test_constituencies_json_api(self):
         '''Test the TFWY API functions in returning consistuencies'''
 
@@ -131,6 +132,92 @@ class TestFetchDataMethods_TWFY(unittest.TestCase):
 
         self.assertEqual(processed_data, test_reference)
 
+    def test_fetch_addresses_GOV_api(self):
+        '''Test the GOV api returns addresses in the correct format in XML'''
+        test_constituency = "Ceredigion"
+
+        xml_results = parl_init_GOV.fetch_xml_online(
+                        request='constituency='+test_constituency+'/',
+                        output='Addresses/'
+                        )
+       
+        test_reference = '''
+            <Members>
+              <Member Member_Id="1498" Dods_Id="31723" Pims_Id="4845">
+                <DisplayAs>Mr Mark Williams</DisplayAs>
+                <ListAs>Williams, Mr Mark</ListAs>
+                <FullTitle>Mr Mark Williams MP</FullTitle>
+                <LayingMinisterName/>
+                <DateOfBirth>1966-03-24T00:00:00</DateOfBirth>
+                <DateOfDeath xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                <Gender>M</Gender>
+                <Party Id="17">Liberal Democrat</Party>
+                <House>Commons</House>
+                <MemberFrom>Ceredigion</MemberFrom>
+                <HouseStartDate>2005-05-05T00:00:00</HouseStartDate>
+                <HouseEndDate xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                <CurrentStatus Id="0" IsActive="True">
+                  <Name>Current Member</Name>
+                  <Reason/>
+                  <StartDate>2015-05-07T00:00:00</StartDate>
+                </CurrentStatus>
+                <Addresses>
+                  <Address Type_Id="6">
+                    <Type>Website</Type>
+                    <IsPreferred>False</IsPreferred>
+                    <IsPhysical>False</IsPhysical>
+                    <Note/>
+                    <Address1>http://www.markwilliams.org.uk/</Address1>
+                  </Address>
+                  <Address Type_Id="4">
+                    <Type>Constituency</Type>
+                    <IsPreferred>False</IsPreferred>
+                    <IsPhysical>True</IsPhysical>
+                    <Note/>
+                    <Address1>32 North Parade</Address1>
+                    <Address2>Aberystwyth</Address2>
+                    <Address3/>
+                    <Address4/>
+                    <Address5>Ceredigion</Address5>
+                    <Postcode>SY23 2NF</Postcode>
+                    <Phone>01970 627721</Phone>
+                    <Fax/>
+                    <Email/>
+                    <OtherAddress/>
+                  </Address>
+                  <Address Type_Id="1">
+                    <Type>Parliamentary</Type>
+                    <IsPreferred>False</IsPreferred>
+                    <IsPhysical>True</IsPhysical>
+                    <Note/>
+                    <Address1>House of Commons</Address1>
+                    <Address2/>
+                    <Address3/>
+                    <Address4/>
+                    <Address5>London</Address5>
+                    <Postcode>SW1A 0AA</Postcode>
+                    <Phone>020 7219 8469</Phone>
+                    <Fax/>
+                    <Email>williamsmf@parliament.uk</Email>
+                    <OtherAddress/>
+                  </Address>
+                  <Address Type_Id="7">
+                    <Type>Twitter</Type>
+                    <IsPreferred>False</IsPreferred>
+                    <IsPhysical>False</IsPhysical>
+                    <Note/>
+                    <Address1>https://twitter.com/mark4ceredigion</Address1>
+                  </Address>
+                </Addresses>
+              </Member>
+            </Members>
+            '''
+
+        returned_string = etree.tostring(xml_results, pretty_print=True)
+        returned_string = "\n            "+returned_string.replace(">\n", ">\n            ")
+
+        # print test_reference, '----', returned_string
+        self.assertEqual(test_reference, returned_string)
 
 class TestLoadDatabaseMethods(unittest.TestCase):
     def setUp(self):
@@ -206,7 +293,7 @@ class TestLoadDatabaseMethods(unittest.TestCase):
             self.assertEqual( loaded_offices[-4:], offices_test_reference )
 
     def test_populate_addresses_from_constituency(self):
-        
+        ''' Test the addresses are loaded for a given constituency'''
         pass
 
 class TestDatabaseAccessorMethods(unittest.TestCase):
@@ -262,7 +349,7 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
         os.remove(self.test_db)
 
     def test_return_constituency_list(self):
-        '''Test all constituencies returned''' 
+        '''Test all constituencies returned in a list''' 
         constituency_list = parl_init_GOV.return_constituency_list(self.test_db)
 
         start_constituencies = [u'Aberavon', u'Aberconwy', u'Aberdeen North']
@@ -272,6 +359,15 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
         self.assertEqual(len(constituency_list), 650 )
         self.assertEqual( start_constituencies, constituency_list[:3] )
         self.assertEqual( end_constituencies, constituency_list[-3:] )
+
+    def test_return_MPs_list(self):
+        '''Test all MPs returned in a list'''
+        pass 
+
+    def test_return_MP_addresses(self):
+        """Test addresses returned for an MP or constituency"""
+        pass
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

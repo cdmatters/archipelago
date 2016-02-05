@@ -161,10 +161,6 @@ def TWFY_setup():
     print 'TWFY Setup in %ds'%(time.time()-start)
 
 
-
-
-
-
 if __name__ == '__main__':
     TWFY_setup()
 

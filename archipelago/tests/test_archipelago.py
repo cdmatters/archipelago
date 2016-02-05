@@ -1,4 +1,5 @@
-from archipelago import parl_init_TWFY, main_setup, parl_init_GOV, archipelago
+from archipelago import archipelago
+from archipelago.setup import main_setup, parl_init_TWFY, parl_init_GOV
 
 import unittest
 import sqlite3

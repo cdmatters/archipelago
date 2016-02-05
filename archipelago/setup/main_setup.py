@@ -18,10 +18,20 @@ def create_database(dbname='parl.db'):
                                             StartDate Text, EndDate Text, Name Text, Title Text)")
         cur.execute("CREATE TABLE Addresses (OfficialId Number, AddressType Text, Address Text)")
 
-def main_setup():
-    create_database()
-    pi_TWFY.TWFY_setup()
-    pi_GOV.GOV_setup()
+def setup_archipelago():
+    try:
+        create_database()
+        pi_TWFY.TWFY_setup()
+        pi_GOV.GOV_setup()
+    except: #bad
+        if os.path.isfile('parl.db'):
+            os.remove('parl.db')
+            raise
+
+def is_arch_setup():
+    return os.path.isfile('parl.db') 
+
 
 if __name__ == '__main__':
-    main_setup()
+    if is_arch_setup():
+        setup_archipelago()

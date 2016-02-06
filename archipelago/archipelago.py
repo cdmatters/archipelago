@@ -12,3 +12,4 @@ def get_constituencies(database='parl.db'):
         
     return constituency_list
 
+

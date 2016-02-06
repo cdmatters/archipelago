@@ -14,15 +14,15 @@ def load_TWFY_key():
     This can be obtained at http://www.theyworkforyou.com/api/key
     Please enter key here: '''
 
-    if not os.environ.get('TWFY_KEY'):
+    if not os.environ.get('twfy.key'):
         
-        if os.path.isfile('TWFY_key'):
-            with open('TWFY_key', 'r') as f:
+        if os.path.isfile('twfy.key'):
+            with open('twfy.key', 'r') as f:
                 os.environ['TWFY_KEY'] = f.read()
         else:
             TWFY_key = raw_input( TWFY_help )
             os.environ['TWFY_KEY'] = TWFY_key
-            with open('TWFY_key', 'w') as f:
+            with open('twfy.key', 'w') as f:
                 f.write(TWFY_key)
 
 load_TWFY_key()
@@ -157,7 +157,7 @@ def TWFY_setup():
     start = time.time()
     load_constituencies()
     load_mp_details()
-    load_images_for_imageless_mps()
+    # load_images_for_imageless_mps()
     print 'TWFY Setup in %ds'%(time.time()-start)
 
 

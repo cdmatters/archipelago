@@ -4,7 +4,8 @@ from lxml import etree
 import os
 import time
 import json
-import archipelago
+from archipelago import archipelago
+from tqdm import tqdm
 
 ###########################
 site = 'http://data.parliament.uk/membersdataplatform/services/mnis/'
@@ -22,6 +23,7 @@ def fetch_xml_online(request, api='members/query/', output=''):
 
 def build_mp_addresses_from_constituency(addresses_request_xml):
     """ Build a python object containing addresses about an MP """
+    # print etree.tostring(addresses_request_xml, pretty_print=True)
     #ERROR HANDLING
     mp_address = {}
     mp_address["official_ID"] = addresses_request_xml[0].get('Member_Id')
@@ -59,8 +61,12 @@ def load_addresses_from_constituency(constituency, database="parl.db"):
 def GOV_setup():
     start = time.time()
     constituencies = archipelago.get_constituencies()
-    for c in constituencies:
-        load_addresses_from_constituency(c)
+    for c in tqdm(constituencies):
+        try:
+            load_addresses_from_constituency(c)
+        except IndexError:
+            print "ERROR: Could not load %s! Please check data " % c
+            continue
     print 'GOV Setup in %ds'%(time.time()-start)
 
     

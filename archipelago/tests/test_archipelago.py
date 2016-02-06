@@ -7,6 +7,7 @@ import json
 from lxml import etree
 import os
 
+
 # -----------------------------  ARCHIPELAGO TESTS -----------------------------
 #
 # The tests of archipelago are divided into four sections: 
@@ -411,6 +412,8 @@ class TestLoadDataMethods(unittest.TestCase):
         parl_init_GOV.load_addresses_from_constituency(u"Ceredigion", self.test_db)
         parl_init_GOV.load_addresses_from_constituency(u"York Central", self.test_db)
         parl_init_GOV.load_addresses_from_constituency(u"Ynys M\xf4n", self.test_db)
+        # parl_init_GOV.load_addresses_from_constituency(u"Sheffield, Brightside and Hillsborough", self.test_db)
+
 
         with sqlite3.connect(self.test_db) as connection:
             cur = connection.cursor()
@@ -497,7 +500,6 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
 
     def test_return_MPs_list(self):
         '''ACCESS:: Test all MPs returned in a list'''
-
         pass 
 
     def test_return_MP_addresses(self):

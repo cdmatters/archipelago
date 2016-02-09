@@ -1,34 +1,22 @@
-#*Untitled* Parliament Project 
-
-This repository contains code for the creation and 
-population of MP's data, both from the GOV.UK and 
-THEYWORKFORYOU (TWFY) Websites. 
+#*Archipelago*
 
 
-It also contains a number of interesting projects
-that rely on the similar data.
+Archipelago is a library that creates an interface to obtain parliamentary information quickly and easily in Python, for use in other open source politics related projects. 
+
+It quickly creates a complete local database of parliamentary information for the UK, by querying the both GOV.UK and TheyWorkForYou.com websites, and provides an easy api to query this database, whilst also exposing the database itself.
+
+
 
 ##RUN: 
-1. pip install the requirements.txt
+1. pip install archipelago
 2. *parl_init_TWFY* requires an api key. Generate this
 on the TWFY website.
-3. run *main_setup.py*
+3. the first time you run after import archipelago, it will ask for your key.
 
-This will:
-* generate a local database of MPs.
-* data included: name, constituency, party, seats/offices,
-small official photos of every MP
+##DATA:
 
-##PROJECTS:
-
-###Twirps
-
-*All work has migrated from the subdirectory here to the repo [here](https://github.com/condnsdmatters/twirps)*
-
-This project populates a database of tweets from MPs
-and provides analysis on them.
-
-
+* **House of Commons**: name, constituency, party, seats/offices, websites, twitter handles, small official photos of every MP
+* **House of Lords**: *incomplete*
 
 ##IDEAS:
 
@@ -36,5 +24,15 @@ and provides analysis on them.
 * scraping/rss to pick up relevant news articles for mps
 * checking blogs of mps and linking to relevant articles
 * searching official gov site (not TWFY)
+
+##PROJECTS:
+
+####Twirps
+
+This project populates a database of tweets from MPs
+and provides analysis on them.
+
+*All work for Twirps has migrated from the subdirectory here to the repo [here](https://github.com/condnsdmatters/twirps)*
+
 
 

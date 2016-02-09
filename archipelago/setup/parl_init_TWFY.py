@@ -14,7 +14,7 @@ def load_TWFY_key():
     This can be obtained at http://www.theyworkforyou.com/api/key
     Please enter key here: '''
 
-    if not os.environ.get('twfy.key'):
+    if not os.environ.get('TWFY_KEY'):
         
         if os.path.isfile('twfy.key'):
             with open('twfy.key', 'r') as f:

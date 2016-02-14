@@ -33,5 +33,5 @@ def is_arch_setup():
 
 
 if __name__ == '__main__':
-    if is_arch_setup():
+    if not is_arch_setup():
         setup_archipelago()

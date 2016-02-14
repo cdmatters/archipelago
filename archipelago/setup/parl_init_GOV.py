@@ -4,7 +4,7 @@ from lxml import etree
 import os
 import time
 import json
-from archipelago import archipelago
+from archipelago import Archipelago
 from tqdm import tqdm
 
 ###########################
@@ -60,7 +60,8 @@ def load_addresses_from_constituency(constituency, database="parl.db"):
 
 def GOV_setup():
     start = time.time()
-    constituencies = archipelago.get_constituencies()
+    arch = Archipelago()
+    constituencies = arch.get_constituencies()
     for c in tqdm(constituencies):
         try:
             load_addresses_from_constituency(c)

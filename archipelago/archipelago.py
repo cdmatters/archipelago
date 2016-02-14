@@ -27,4 +27,27 @@ class Archipelago(object):
 
         return [result[0] for result in  results]
 
+    def get_twitter_users(self):
+        """Return a python list of constituencies in the archipelago database.""" 
+        # Throw error if database does not exist """
+        request_sql = '''SELECT mp.Name, mp.Party, mp.OfficialId, ad.Address
+                        FROM  Addresses AS ad 
+                        INNER JOIN MPCommons as mp
+                        ON mp.OfficialId=ad.OfficialId
+                        WHERE ad.AddressType="twitter"
+                        ORDER BY mp.Name ASC'''
+        results = self._execute_query(request_sql)
+         
+        return [
+                   {   
+                    "name":r[0],
+                    "party":r[1],
+                    "o_id":r[2], 
+                    "twitter_url":r[3], 
+                    "handle":r[3][20:] 
+                    } for r in results 
+                ]
+
+
+
 

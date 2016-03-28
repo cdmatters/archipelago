@@ -9,12 +9,12 @@ class MPCommons(Base):
 
     Name = Column(String)
     Constituency = Column(String, primary_key=True)
-    MP = Column(Boolean)
+    MP = Column(Boolean, default=0)
     Party = Column(String)
     ImageUrl = Column(String)
-    MemberId = Column(Integer)
-    PersonId = Column(Integer)
-    OfficialId = Column(Integer, primary_key=True)
+    MemberId = Column(Integer, default=0)
+    PersonId = Column(Integer, default=0)
+    OfficialId = Column(Integer, index=True, default=0)
 
     # def __repr__(self):
     #    pass

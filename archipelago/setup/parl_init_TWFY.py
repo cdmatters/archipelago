@@ -7,6 +7,8 @@ import os
 import time
 import json
 
+from models import Office, Address, MPCommons
+
 
 def load_TWFY_key():
     TWFY_help = '''
@@ -47,17 +49,15 @@ def fetch_data_online(request_type, bonus_arg='', output='json'):
     return fetched_data
 
 
-def load_constituencies(database='parl.db'):
-    constituencies_json = fetch_data_online('getConstituencies')
-
-    constituencies = [(c["name"],) for c in constituencies_json] #tuple for 'executemany' statement
+def load_constituencies(session_factory):
+    session = session_factory()
     
-    with sqlite3.connect(database) as connection:
-        cur = connection.cursor()
-        cur.execute('DELETE from MPCommons')
-        cur.executemany("INSERT INTO MPCommons \
-                        VALUES(null,?, 0, null,null,0,0,0)", constituencies)
-        connection.commit()
+    constituencies_json = fetch_data_online('getConstituencies')
+    mp_list = [MPCommons(Constituency=c["name"]) for c in constituencies_json]
+
+    session.add_all(mp_list)
+    
+    session.commit()
 
 def build_mp_and_office_lists(mp_details_json):
     # this could be a one liner fn. don't.
@@ -154,9 +154,9 @@ def load_images_for_imageless_mps():
                            ('images/mps/%s.jpg'%person_id, person_id)) 
             connection.commit()
 
-def TWFY_setup():
+def TWFY_setup(session_factory):
     start = time.time()
-    load_constituencies()
+    load_constituencies(session_factory)
     load_mp_details()
     # load_images_for_imageless_mps()
     print 'TWFY Setup in %ds'%(time.time()-start)

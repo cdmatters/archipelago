@@ -348,7 +348,7 @@ class TestLoadDataMethods(unittest.TestCase):
     def test_load_constituencies(self):
         '''LOAD:: Test the load_constituencies method correctly loads into a test database'''
 
-        parl_init_TWFY.load_constituencies(self.test_db)
+        parl_init_TWFY.load_constituencies(self.session_factory)
 
         with sqlite3.connect(self.test_db) as connection:
             cur = connection.cursor()
@@ -376,7 +376,7 @@ class TestLoadDataMethods(unittest.TestCase):
         '''LOAD:: Load_constituencies as setUp, and test mp details (general and committees)
         have loaded correctly into test db '''
         # SetUp: Load constituencies.    Note: method had been tested separately
-        parl_init_TWFY.load_constituencies(self.test_db) 
+        parl_init_TWFY.load_constituencies(self.session_factory) 
         # End of SetUp
 
         parl_init_TWFY.load_mp_details(self.test_db)
@@ -441,10 +441,12 @@ class TestLoadDataMethods(unittest.TestCase):
 class TestDatabaseAccessorMethods(unittest.TestCase):
     def setUp(self):
         self.test_db = "test.db"
+        self.engine = main_setup.create_database('sqlite:///'+self.test_db)
+        self.session_factory = sessionmaker(bind=self.engine) 
 
         # Build test database with reference data to test accessors
         main_setup.create_database('sqlite:///'+self.test_db)
-        parl_init_TWFY.load_constituencies(self.test_db) 
+        parl_init_TWFY.load_constituencies(self.session_factory) 
 
         test_reference = (
             [

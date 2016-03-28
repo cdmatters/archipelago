@@ -6,6 +6,7 @@ import time
 import json
 from archipelago import Archipelago
 from tqdm import tqdm
+from models import Office, Address, MPCommons
 
 ###########################
 site = 'http://data.parliament.uk/membersdataplatform/services/mnis/'
@@ -42,29 +43,31 @@ def build_mp_addresses_from_constituency(addresses_request_xml):
 
     return mp_address
 
-def load_addresses_from_constituency(constituency, database="parl.db"):
+def load_addresses_from_constituency(constituency, session_factory):
     #note: this function could be used to populate many fields: name, party, etc. can update later
     #      right now, leave the TWFY data in place: INPUT --> Official Id, Address
     addresses_xml = fetch_xml_online('constituency='+constituency+'/', output='Addresses/')
     mp_addresses = build_mp_addresses_from_constituency(addresses_xml)
     official_ID = mp_addresses["official_ID"]
+ 
+    session = session_factory()
 
-    with sqlite3.connect(database) as connection:
-        cur = connection.cursor()
-        cur.execute('UPDATE MPCommons SET OfficialId=? WHERE Constituency=?', (official_ID,constituency))
-    
-        for a_type, address in mp_addresses["addresses"].items():
-            cur.execute('INSERT INTO Addresses VALUES(?,?,?)', (official_ID,a_type,address))
+    session.query(MPCommons).filter(MPCommons.Constituency==constituency).\
+                update({MPCommons.OfficialId:official_ID})
 
+    for a_type, address in mp_addresses["addresses"].items():
+        address = Address(OfficialId=official_ID, AddressType=a_type, Address=address)
+        session.add(address)
 
+    session.commit()
 
-def GOV_setup():
+def GOV_setup(session_factory):
     start = time.time()
-    arch = Archipelago()
+    arch = Archipelago() #remove this. results in curcular dep's
     constituencies = arch.get_constituencies()
     for c in tqdm(constituencies):
         try:
-            load_addresses_from_constituency(c)
+            load_addresses_from_constituency(c, session_factory)
         except IndexError:
             print "ERROR: Could not load %s! Please check data " % c
             continue

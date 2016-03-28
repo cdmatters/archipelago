@@ -7,7 +7,8 @@ import parl_init_TWFY as pi_TWFY
 import parl_init_GOV as pi_GOV
 from models import Base
 
-from sqlalchemy import create_engine    
+from sqlalchemy import create_engine 
+from sqlalchemy.orm import sessionmaker   
 
 def create_database(dbname='sqlite:///parl.db'):
     db_url = dbname
@@ -15,12 +16,16 @@ def create_database(dbname='sqlite:///parl.db'):
     engine = create_engine(db_url, echo=False)
     Base.metadata.drop_all(engine, checkfirst=True)
     Base.metadata.create_all(engine)
+    return engine
 
 def setup_archipelago():
+    engine = create_engine(db_url, echo=False)
+    Session = sessionmaker(bind=engine) 
+
     try:
         create_database()
-        pi_TWFY.TWFY_setup()
-        pi_GOV.GOV_setup()
+        pi_TWFY.TWFY_setup(Session)
+        pi_GOV.GOV_setup(Session)
     except: #bad
         if os.path.isfile('parl.db'):
             os.remove('parl.db')

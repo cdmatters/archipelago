@@ -32,7 +32,7 @@ class Office(Base):
     # def __repr__(self):
     #     pass
 
-class Addresses(Base):
+class Address(Base):
     __tablename__ = 'Addresses'
 
     OfficialId = Column(Integer)

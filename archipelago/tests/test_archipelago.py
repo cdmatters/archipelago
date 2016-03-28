@@ -1,6 +1,9 @@
 from archipelago import archipelago
 from archipelago.setup import main_setup, parl_init_TWFY, parl_init_GOV
 
+from sqlalchemy import create_engine 
+from sqlalchemy.orm import sessionmaker  
+
 import unittest
 import sqlite3
 import json
@@ -336,7 +339,8 @@ class TestBuildDataMethods(unittest.TestCase):
 class TestLoadDataMethods(unittest.TestCase):
     def setUp(self):
         self.test_db = "test.db"
-        main_setup.create_database('sqlite:///'+self.test_db)
+        self.engine = main_setup.create_database('sqlite:///'+self.test_db)
+        self.session_factory = sessionmaker(bind=self.engine) 
 
     def tearDown(self):
         os.remove(self.test_db)
@@ -409,9 +413,9 @@ class TestLoadDataMethods(unittest.TestCase):
     def test_load_addresses_from_constituency(self):
         '''LOAD::  Test the addresses are loaded for a given constituency'''
 
-        parl_init_GOV.load_addresses_from_constituency(u"Ceredigion", self.test_db)
-        parl_init_GOV.load_addresses_from_constituency(u"York Central", self.test_db)
-        parl_init_GOV.load_addresses_from_constituency(u"Ynys M\xf4n", self.test_db)
+        parl_init_GOV.load_addresses_from_constituency(u"Ceredigion", self.session_factory)
+        parl_init_GOV.load_addresses_from_constituency(u"York Central", self.session_factory)
+        parl_init_GOV.load_addresses_from_constituency(u"Ynys M\xf4n", self.session_factory)
         # parl_init_GOV.load_addresses_from_constituency(u"Sheffield, Brightside and Hillsborough", self.test_db)
 
 

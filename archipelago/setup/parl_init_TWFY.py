@@ -126,9 +126,10 @@ def load_mp_details(database='parl.db'):
             offices_list.extend(office)
 
         #input remaining data and offices into databases
-        cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?,?)', offices_list)
         cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
                         WHERE Constituency=?', mps_list)
+
+        cur.executemany('INSERT OR REPLACE INTO Offices VALUES(?,?,?,?,?,?)', offices_list)
         connection.commit()
 
 def download_images_from_person_id(person_id):

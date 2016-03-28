@@ -5,18 +5,16 @@ import os
 
 import parl_init_TWFY as pi_TWFY
 import parl_init_GOV as pi_GOV
+from models import Base
 
-def create_database(dbname='parl.db'):
-    if os.path.isfile(dbname):
-        os.remove(dbname)
-    with sqlite3.connect(dbname) as connection:
-        cur = connection.cursor()
-        cur.execute("CREATE TABLE MPCommons (Name Text, Constituency Text, MP Boolean,\
-                                            Party Text, ImageUrl Text, MemberId Number,\
-                                            PersonId Number, OfficialId Number)")
-        cur.execute("CREATE TABLE Offices  (PersonId Number, Office Text,\
-                                            StartDate Text, EndDate Text, Name Text, Title Text)")
-        cur.execute("CREATE TABLE Addresses (OfficialId Number, AddressType Text, Address Text)")
+from sqlalchemy import create_engine    
+
+def create_database(dbname='sqlite:///parl.db'):
+    db_url = dbname
+
+    engine = create_engine(db_url, echo=False)
+    Base.metadata.drop_all(engine, checkfirst=True)
+    Base.metadata.create_all(engine)
 
 def setup_archipelago():
     try:

@@ -336,7 +336,7 @@ class TestBuildDataMethods(unittest.TestCase):
 class TestLoadDataMethods(unittest.TestCase):
     def setUp(self):
         self.test_db = "test.db"
-        main_setup.create_database(self.test_db)
+        main_setup.create_database('sqlite:///'+self.test_db)
 
     def tearDown(self):
         os.remove(self.test_db)
@@ -392,7 +392,7 @@ class TestLoadDataMethods(unittest.TestCase):
             
             # Test MPs general data has loaded
             self.assertEqual( loaded_mps[-5:], mp_test_reference )
-
+            
             cur.execute("SELECT * FROM Offices WHERE Name='John Bercow'")
             loaded_offices = cur.fetchall()
 
@@ -439,7 +439,7 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
         self.test_db = "test.db"
 
         # Build test database with reference data to test accessors
-        main_setup.create_database(self.test_db)
+        main_setup.create_database('sqlite:///'+self.test_db)
         parl_init_TWFY.load_constituencies(self.test_db) 
 
         test_reference = (

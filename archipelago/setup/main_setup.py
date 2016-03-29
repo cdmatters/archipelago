@@ -25,12 +25,13 @@ def setup_archipelago():
 
         pi_TWFY.TWFY_setup(session_factory)
         pi_GOV.GOV_setup(session_factory)
+        return (engine, session_factory)
     except: #bad
         if os.path.isfile('parl.db'):
             os.remove('parl.db')
             raise
 
-def is_arch_setup():
+def is_arch_setup_local():
     return os.path.isfile('parl.db') 
 
 

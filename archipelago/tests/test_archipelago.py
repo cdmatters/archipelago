@@ -507,7 +507,7 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
 
     def test_return_constituency_list(self):
         '''ACCESS:: Test all constituencies returned in a list''' 
-        arch = archipelago.Archipelago("test.db")
+        arch = archipelago.Archipelago("sqlite:///test.db")
         constituency_list = arch.get_constituencies()
 
         start_constituencies = [u'Aberavon', u'Aberconwy', u'Aberdeen North']

@@ -1,13 +1,32 @@
 import sqlite3
 import os
 
+from sqlalchemy import create_engine 
+from sqlalchemy.orm import sessionmaker  
+
+from setup.models import MPCommons, Address, Office
+from setup import setup_archipelago
+
+
 class Archipelago(object):
 
-    def __init__(self, database="parl.db"):
-        if not os.path.isfile(database):
-            #maybe this should go elsewhere.
-            print """ERROR: no specified db file etc."""
+    # totally run into problems if more than one db
+    _db_url = None 
+    _engine = None 
+    _session_factory = sessionmaker()
+    
+    def __init__(self, database="sqlite:///parl.db"):
+        if not self._engine:
+            self._engine = create_engine(database, echo=False)
+            self._session_factory.configure(bind=self._engine)
 
+        if  not self._engine.has_table(MPCommons.__tablename__) or \
+            not self._engine.has_table(Address.__tablename__) or \
+            not self._engine.has_table(Office.__tablename__): 
+           self._engine, self._session_factory = setup_archipelago()
+
+
+        self.session = self._session_factory()
         self.parl_db = database
 
 
@@ -21,11 +40,8 @@ class Archipelago(object):
 
     def get_constituencies(self):
         """Return a python list of constituencies in the archipelago database.""" 
-        # Throw error if database does not exist """
-        request_sql = 'SELECT Constituency FROM MPCommons'
-        results = self._execute_query(request_sql)
 
-        return [result[0] for result in  results]
+        return [constit[0] for constit in self.session.query(MPCommons.Constituency).all()]
 
     def get_twitter_users(self):
         """Return a python list of constituencies in the archipelago database.""" 

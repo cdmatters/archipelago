@@ -1,8 +1,11 @@
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import  Column, Integer, String, Boolean
+from sqlalchemy.orm import relationship
+from sqlalchemy import  Column, Integer, String, Boolean, ForeignKey
 
 Base = declarative_base()
+
+# Note NO NICE PRINTING. Smarter schema: todo.
 
 class MPCommons(Base):
     __tablename__ = 'MPCommons'
@@ -15,18 +18,24 @@ class MPCommons(Base):
     MemberId = Column(Integer, default=0)
     PersonId = Column(Integer, default=0)
     OfficialId = Column(Integer, index=True, default=0)
+    Addresses = relationship("Address",
+                            backref="mp",
+                            primaryjoin="Address.OfficialId==MPCommons.OfficialId")
+    Offices = relationship("Office", 
+                            backref='mp',
+                            primaryjoin="Office.PersonId==MPCommons.PersonId")
 
     # def __repr__(self):
-    #    pass
+    #     pass
 
 class Office(Base):
     __tablename__ = 'Offices'
 
-    PersonId = Column(Integer, primary_key=True)
+    PersonId = Column(Integer, ForeignKey(MPCommons.PersonId), primary_key=True)
     Office = Column(String, primary_key=True)
     StartDate = Column(String, primary_key=True)
-    EndDate = Column(String, primary_key=True)
-    Name = Column(String, primary_key=True)
+    EndDate = Column(String)
+    Name = Column(String)
     Title = Column(String, primary_key=True)
 
     def __repr__(self):
@@ -36,7 +45,7 @@ class Office(Base):
 class Address(Base):
     __tablename__ = 'Addresses'
 
-    OfficialId = Column(Integer, primary_key=True)
+    OfficialId = Column(Integer, ForeignKey(MPCommons.OfficialId), primary_key=True)
     AddressType = Column(String)
     Address = Column(String, primary_key=True) 
 
@@ -50,18 +59,5 @@ if __name__ == '__main__':
     engine = create_engine("sqlite:///parl.db", echo=True)
 
     Base.metadata.create_all(engine)
-
-    Session = sessionmaker(bind=engine) # or sessionmaker(); Session.configure(bind=engine)
-
-    session = Session() # now have a conversation w the database
-    
-    # sqlalchemy example...
-    # 
-    # ed_user= User(name='ed', fullname='ed balls', password='pwud')
-    # session.add(ed_user)
-    # session.commit()
-
-    # for instance in session.query(User).order_by(User.id):
-    #     print (instance.name, instance.fullname)
 
 

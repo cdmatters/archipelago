@@ -8,6 +8,7 @@ from setup.models import MPCommons, Address, Office
 from setup import setup_archipelago
 
 
+
 class Archipelago(object):
 
     # totally run into problems if more than one db
@@ -27,16 +28,6 @@ class Archipelago(object):
 
 
         self.session = self._session_factory()
-        self.parl_db = database
-
-
-    def _execute_query(self, sql_command):
-        with sqlite3.connect(self.parl_db) as connection:
-            cur = connection.cursor()
-            cur.execute(sql_command)
-
-            result = cur.fetchall()
-        return result 
 
     def get_constituencies(self):
         """Return a python list of constituencies in the archipelago database.""" 
@@ -45,23 +36,20 @@ class Archipelago(object):
 
     def get_twitter_users(self):
         """Return a python list of constituencies in the archipelago database.""" 
-        # Throw error if database does not exist """
-        request_sql = '''SELECT mp.Name, mp.Party, mp.OfficialId, ad.Address
-                        FROM  Addresses AS ad 
-                        INNER JOIN MPCommons as mp
-                        ON mp.OfficialId=ad.OfficialId
-                        WHERE ad.AddressType="twitter"
-                        ORDER BY mp.Name ASC'''
-        results = self._execute_query(request_sql)
-         
+        
+        results = self.session.query(MPCommons, Address.Address).\
+            join(MPCommons.Addresses).\
+            filter(Address.AddressType=='twitter').\
+            order_by(MPCommons.Name).all()
+
         return [
                    {   
-                    "name":r[0],
-                    "party":r[1],
-                    "o_id":r[2], 
-                    "twitter_url":r[3], 
-                    "handle":r[3][20:] 
-                    } for r in results 
+                    "name": MP.Name,
+                    "party":MP.Party,
+                    "o_id":MP.OfficialId, 
+                    "twitter_url":twitter_url, 
+                    "handle":twitter_url[20:] 
+                    } for MP, twitter_url in results 
                 ]
 
 

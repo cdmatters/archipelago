@@ -4,7 +4,6 @@ from lxml import etree
 import os
 import time
 import json
-from archipelago import Archipelago
 from tqdm import tqdm
 from models import Office, Address, MPCommons
 
@@ -61,10 +60,20 @@ def load_addresses_from_constituency(constituency, session_factory):
 
     session.commit()
 
+def get_constituencies(session_factory):
+    """Return a python list of constituencies in the archipelago database.""" 
+    # Throw error if database does not exist """
+    session = session_factory()
+    cons_list = [ constit[0] for constit in session.query(MPCommons.Constituency).all()]
+    
+    session.commit()
+    return cons_list
+
+
+
 def GOV_setup(session_factory):
     start = time.time()
-    arch = Archipelago() #remove this. results in curcular dep's
-    constituencies = arch.get_constituencies()
+    constituencies = get_constituencies(session_factory)
     for c in tqdm(constituencies):
         try:
             load_addresses_from_constituency(c, session_factory)

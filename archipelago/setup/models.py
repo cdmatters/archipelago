@@ -36,7 +36,7 @@ class Office(Base):
 class Address(Base):
     __tablename__ = 'Addresses'
 
-    OfficialId = Column(Integer)
+    OfficialId = Column(Integer, primary_key=True)
     AddressType = Column(String)
     Address = Column(String, primary_key=True) 
 

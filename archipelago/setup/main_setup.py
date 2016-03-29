@@ -19,11 +19,10 @@ def create_database(dbname='sqlite:///parl.db'):
     return engine
 
 def setup_archipelago():
-    engine = create_engine(db_url, echo=False)
-    Session = sessionmaker(bind=engine) 
-
     try:
-        create_database()
+        engine = create_database()
+        Session = sessionmaker(bind=engine) 
+
         pi_TWFY.TWFY_setup(Session)
         pi_GOV.GOV_setup(Session)
     except: #bad

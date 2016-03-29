@@ -6,6 +6,7 @@ from lxml import etree
 import os
 import time
 import json
+from tqdm import tqdm
 
 from models import Office, Address, MPCommons
 
@@ -161,27 +162,23 @@ def download_images_from_person_id(person_id):
         img.write(image_req.content)
         img.close()
 
-def load_images_for_imageless_mps():
+def load_images_for_imageless_mps(session_factory):
     if not os.path.exists('profile_images'):
         os.makedirs('profile_images')
-    with sqlite3.connect('parl.db') as connection:
-        cur = connection.cursor()
-        cur.execute('SELECT PersonId FROM MPCommons WHERE ImageUrl IS NULL')
-        
-        mps_missing_images = cur.fetchall()
-        for mp_tuple in mps_missing_images:
-            person_id = mp_tuple[0]
-            download_images_from_person_id(person_id)
-            #insert in for loop incase interrupted
-            cur.execute('UPDATE MPCommons SET ImageUrl=? WHERE PersonId=?',
-                           ('images/mps/%s.jpg'%person_id, person_id)) 
-            connection.commit()
+    
+    session = session_factory()
+    
+    for no_image_mp in tqdm(session.query(MPCommons).filter(MPCommons.ImageUrl==None)):
+        download_images_from_person_id(no_image_mp.PersonId)
+        no_image_mp.ImageUrl = 'images/mps/%s.jpg'%no_image_mp.PersonId
+
+    session.commit()
 
 def TWFY_setup(session_factory):
     start = time.time()
     load_constituencies(session_factory)
     load_mp_details(session_factory)
-    # load_images_for_imageless_mps()
+    # load_images_for_imageless_mps(session_factory)
     print 'TWFY Setup in %ds'%(time.time()-start)
 
 

@@ -350,8 +350,11 @@ class TestLoadDataMethods(unittest.TestCase):
 
     def test_load_constituencies(self):
         '''LOAD:: Test the load_constituencies method correctly loads into a test database'''
+        session = self.session_factory()
 
-        parl_init_TWFY.load_constituencies(self.session_factory)
+        parl_init_TWFY.load_constituencies(session)
+
+        session.commit()
 
         with sqlite3.connect(self.test_db) as connection:
             cur = connection.cursor()
@@ -378,11 +381,12 @@ class TestLoadDataMethods(unittest.TestCase):
     def test_load_mp_details(self):
         '''LOAD:: Load_constituencies as setUp, and test mp details (general and committees)
         have loaded correctly into test db '''
+        session = self.session_factory()
         # SetUp: Load constituencies.    Note: method had been tested separately
-        parl_init_TWFY.load_constituencies(self.session_factory) 
+        parl_init_TWFY.load_constituencies(session) 
         # End of SetUp
-
-        parl_init_TWFY.load_mp_details(self.session_factory)
+        parl_init_TWFY.load_mp_details(session)
+        session.commit()
 
         with sqlite3.connect(self.test_db) as connection:
             cur = connection.cursor()
@@ -416,12 +420,14 @@ class TestLoadDataMethods(unittest.TestCase):
 
     def test_load_addresses_from_constituency(self):
         '''LOAD::  Test the addresses are loaded for a given constituency'''
+        session = self.session_factory()
 
-        parl_init_GOV.load_addresses_from_constituency(u"Ceredigion", self.session_factory)
-        parl_init_GOV.load_addresses_from_constituency(u"York Central", self.session_factory)
-        parl_init_GOV.load_addresses_from_constituency(u"Ynys M\xf4n", self.session_factory)
+        parl_init_GOV.load_addresses_from_constituency(u"Ceredigion", session)
+        parl_init_GOV.load_addresses_from_constituency(u"York Central", session)
+        parl_init_GOV.load_addresses_from_constituency(u"Ynys M\xf4n", session)
         # parl_init_GOV.load_addresses_from_constituency(u"Sheffield, Brightside and Hillsborough", self.test_db)
-
+        
+        session.commit()
 
         with sqlite3.connect(self.test_db) as connection:
             cur = connection.cursor()
@@ -448,10 +454,12 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
         self.engine = main_setup.create_database('sqlite:///'+self.test_db)
         self.session_factory = sessionmaker(bind=self.engine) 
 
+        session = self.session_factory()
+
         # Build test database with reference data to test accessors
         main_setup.create_database('sqlite:///'+self.test_db)
-        parl_init_TWFY.load_constituencies(self.session_factory
-            ) 
+        parl_init_TWFY.load_constituencies(session) 
+        session.commit()
 
         test_reference = (
             [

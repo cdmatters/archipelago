@@ -42,15 +42,13 @@ def build_mp_addresses_from_constituency(addresses_request_xml):
 
     return mp_address
 
-def load_addresses_from_constituency(constituency, session_factory):
+def load_addresses_from_constituency(constituency, session):
     #note: this function could be used to populate many fields: name, party, etc. can update later
     #      right now, leave the TWFY data in place: INPUT --> Official Id, Address
     addresses_xml = fetch_xml_online('constituency='+constituency+'/', output='Addresses/')
     mp_addresses = build_mp_addresses_from_constituency(addresses_xml)
     official_ID = mp_addresses["official_ID"]
  
-    session = session_factory()
-
     session.query(MPCommons).filter(MPCommons.Constituency==constituency).\
                 update({MPCommons.OfficialId:official_ID})
 
@@ -58,28 +56,27 @@ def load_addresses_from_constituency(constituency, session_factory):
         address = Address(OfficialId=official_ID, AddressType=a_type, Address=address)
         session.add(address)
 
-    session.commit()
-
-def get_constituencies(session_factory):
+def get_constituencies(session):
     """Return a python list of constituencies in the archipelago database.""" 
     # Throw error if database does not exist """
-    session = session_factory()
-    cons_list = [ constit[0] for constit in session.query(MPCommons.Constituency).all()]
-    
-    session.commit()
-    return cons_list
+
+    return [ constit[0] for constit in session.query(MPCommons.Constituency).all()]
+
 
 
 
 def GOV_setup(session_factory):
     start = time.time()
-    constituencies = get_constituencies(session_factory)
+    session = session_factory()
+    constituencies = get_constituencies(session)
     for c in tqdm(constituencies):
         try:
-            load_addresses_from_constituency(c, session_factory)
+            load_addresses_from_constituency(c, session)
         except IndexError:
             print "ERROR: Could not load %s! Please check data " % c
             continue
+    session.commit()
+    session.close()
     print 'GOV Setup in %ds'%(time.time()-start)
 
     

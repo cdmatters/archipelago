@@ -50,15 +50,12 @@ def fetch_data_online(request_type, bonus_arg='', output='json'):
     return fetched_data
 
 
-def load_constituencies(session_factory):
-    session = session_factory()
-    
+def load_constituencies(session):
     constituencies_json = fetch_data_online('getConstituencies')
     mp_list = [MPCommons(Constituency=c["name"]) for c in constituencies_json]
 
     session.add_all(mp_list)
     
-    session.commit()
 
 def build_mp_and_office_lists(mp_details_json):
     # this could be a one liner fn. don't.
@@ -88,7 +85,7 @@ def build_mp_and_office_lists(mp_details_json):
 
     return (mp_details, office_details)
 
-def load_mp_details(session_factory, database='parl.db'):  
+def load_mp_details(session):  
     mps_list = []
     offices_list = []
 
@@ -102,9 +99,6 @@ def load_mp_details(session_factory, database='parl.db'):
 
         mps_list.extend(party_mps)
         offices_list.extend(party_offices)
-    
-
-    session = session_factory()
 
     for mp in mps_list:
         session.query(MPCommons).filter(MPCommons.Constituency==mp['constituency']).\
@@ -116,7 +110,6 @@ def load_mp_details(session_factory, database='parl.db'):
                 MPCommons.PersonId:mp['person_id']
             })
 
-    session.commit()
 
     remaining_mp_list = []
 
@@ -154,7 +147,6 @@ def load_mp_details(session_factory, database='parl.db'):
                       ) for o in unique_offices ]   
 
     session.add_all(set(offices))
-    session.commit()
 
 def download_images_from_person_id(person_id):
     image_req = requests.get(site+'images/mps/%d.jpg'%person_id)
@@ -162,23 +154,23 @@ def download_images_from_person_id(person_id):
         img.write(image_req.content)
         img.close()
 
-def load_images_for_imageless_mps(session_factory):
+def load_images_for_imageless_mps(session):
     if not os.path.exists('profile_images'):
         os.makedirs('profile_images')
-    
-    session = session_factory()
     
     for no_image_mp in tqdm(session.query(MPCommons).filter(MPCommons.ImageUrl==None)):
         download_images_from_person_id(no_image_mp.PersonId)
         no_image_mp.ImageUrl = 'images/mps/%s.jpg'%no_image_mp.PersonId
 
-    session.commit()
 
 def TWFY_setup(session_factory):
     start = time.time()
-    load_constituencies(session_factory)
-    load_mp_details(session_factory)
-    # load_images_for_imageless_mps(session_factory)
+    session = session_factory()
+    load_constituencies(session)
+    load_mp_details(session)
+    # load_images_for_imageless_mps(session)
+    session.commit()
+    session.close()
     print 'TWFY Setup in %ds'%(time.time()-start)
 
 

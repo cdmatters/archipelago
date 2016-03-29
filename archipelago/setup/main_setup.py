@@ -21,10 +21,10 @@ def create_database(dbname='sqlite:///parl.db'):
 def setup_archipelago():
     try:
         engine = create_database()
-        Session = sessionmaker(bind=engine) 
+        session_factory = sessionmaker(bind=engine) 
 
-        pi_TWFY.TWFY_setup(Session)
-        pi_GOV.GOV_setup(Session)
+        pi_TWFY.TWFY_setup(session_factory)
+        pi_GOV.GOV_setup(session_factory)
     except: #bad
         if os.path.isfile('parl.db'):
             os.remove('parl.db')

@@ -29,8 +29,9 @@ class Office(Base):
     Name = Column(String, primary_key=True)
     Title = Column(String, primary_key=True)
 
-    # def __repr__(self):
-    #     pass
+    def __repr__(self):
+        return "<Office Type ( Name:'%s', Title:'%s', Office:'%s', StartDate'%s', EndDate:'%s')>" % (
+                        self.Name, self.Title, self.Office, self.StartDate, self.EndDate)
 
 class Address(Base):
     __tablename__ = 'Addresses'

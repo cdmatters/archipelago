@@ -168,9 +168,12 @@ class TestFetchDataMethods(unittest.TestCase):
 
 
 class TestBuildDataMethods(unittest.TestCase):
-    def test_build_mp_and_office_tuple_list(self):
+    def test_build_mp_and_office_list(self):
         '''BUILD:: Test the MPandOffice tuple list is build correctly, 
         starting with TWFY API output'''
+
+        # due to shifting to sqlalchemy, this function is almost redundant
+        # as no longer use tuples. have rewritten to be dicts.
 
         test_data = [ 
             {
@@ -208,36 +211,36 @@ class TestBuildDataMethods(unittest.TestCase):
         
         test_reference = (
             [
-                (
-                    "Mark Williams",
-                    "Liberal Democrat", 
-                    40728, 
-                    11489,
-                    "Ceredigion"
-                ),(
-                    "William Marks",
-                    "Labour", 
-                    40730, 
-                    11491,
-                    "York Outer"
-                ) 
+                {
+                    'name':"Mark Williams",
+                    'party':"Liberal Democrat", 
+                    'member_id':40728, 
+                    'person_id':11489,
+                    'constituency':"Ceredigion"
+                },{
+                    'name':"William Marks",
+                    'party':"Labour", 
+                    'member_id':40730, 
+                    'person_id':11491,
+                    'constituency':"York Outer"
+                } 
             ],
             [
-                (
-                    11489,
-                    "Welsh Affairs Committee",
-                    "2015-07-13",
-                    "9999-12-31",
-                    "Mark Williams",
-                    "Member"
-                ),(
-                    11489,
-                    "Foreign Office",
-                    "2015-07-13", 
-                    "9999-12-31", 
-                    "Mark Williams",
-                    "Foreign Secretary"
-                )
+                {
+                    'person_id':11489,
+                    'department':"Welsh Affairs Committee",
+                    'start_date':"2015-07-13",
+                    'end_date':"9999-12-31",
+                    'name':"Mark Williams",
+                    'title':"Member"
+                },{
+                    'person_id':11489,
+                    'department':"Foreign Office",
+                    'start_date':"2015-07-13", 
+                    'end_date':"9999-12-31", 
+                    'name':"Mark Williams",
+                    'title':"Foreign Secretary"
+                }
             ]
         )
 
@@ -379,7 +382,7 @@ class TestLoadDataMethods(unittest.TestCase):
         parl_init_TWFY.load_constituencies(self.session_factory) 
         # End of SetUp
 
-        parl_init_TWFY.load_mp_details(self.test_db)
+        parl_init_TWFY.load_mp_details(self.session_factory)
 
         with sqlite3.connect(self.test_db) as connection:
             cur = connection.cursor()
@@ -407,8 +410,9 @@ class TestLoadDataMethods(unittest.TestCase):
                 (10040, u'House of Commons Commission', u'2009-06-22', u'9999-12-31', u'John Bercow', u'Member')
             ]
             
+            self.maxDiff = None
             # Test MPs committess data has loaded
-            self.assertEqual( loaded_offices[-4:], offices_test_reference )
+            self.assertEqual( set(loaded_offices[-4:]), set(offices_test_reference) )
 
     def test_load_addresses_from_constituency(self):
         '''LOAD::  Test the addresses are loaded for a given constituency'''
@@ -446,7 +450,8 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
 
         # Build test database with reference data to test accessors
         main_setup.create_database('sqlite:///'+self.test_db)
-        parl_init_TWFY.load_constituencies(self.session_factory) 
+        parl_init_TWFY.load_constituencies(self.session_factory
+            ) 
 
         test_reference = (
             [

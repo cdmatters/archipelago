@@ -62,37 +62,37 @@ def load_constituencies(session_factory):
 def build_mp_and_office_lists(mp_details_json):
     # this could be a one liner fn. don't.
     mp_details = [
-        (
-            mp["name"],
-            mp["party"],
-            int(mp["member_id"]),
-            int(mp["person_id"]),
-            mp["constituency"]
-        ) 
+        {
+            'name':mp["name"],
+            'party':mp["party"],
+            'member_id':int(mp["member_id"]),
+            'person_id':int(mp["person_id"]),
+            'constituency':mp["constituency"]
+        } 
         for mp in mp_details_json
     ]
 
     office_details = [
-        (
-            int(mp["person_id"]),
-            office["dept"],
-            office["from_date"],
-            office["to_date"],
-            mp["name"],
-            office["position"]
-        ) 
+        {
+            'person_id':int(mp["person_id"]),
+            'department':office["dept"],
+            'start_date':office["from_date"],
+            'end_date':office["to_date"],
+            'name':mp["name"],
+            'title':office["position"]
+        } 
         for mp in mp_details_json 
         if "office" in mp.keys()
         for office in mp["office"] ]
 
     return (mp_details, office_details)
 
-def load_mp_details(database='parl.db'):  
+def load_mp_details(session_factory, database='parl.db'):  
     mps_list = []
     offices_list = []
 
-    parties = ['conservative', 'labour', 'liberal', 'green', 'independent', 'ukip',
-                    'DUP', 'sinn fein', 'sdlp', 'plaid', 'scottish']
+    parties = ['conservative', 'labour', 'liberal', 'green', 'independent',
+        'ukip', 'DUP', 'sinn fein', 'sdlp', 'plaid', 'scottish']
     
     #collate details from major parties & insert names into db
     for party in parties:
@@ -101,36 +101,59 @@ def load_mp_details(database='parl.db'):
 
         mps_list.extend(party_mps)
         offices_list.extend(party_offices)
-      
-    with sqlite3.connect(database) as connection:
-        cur = connection.cursor()
-        cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
-                        WHERE Constituency=?', mps_list)  
-        mps_list = []
+    
 
-        #collate details from minor parties 
-        cur.execute('SELECT Constituency FROM MPCommons WHERE MP=0')
-        empty_seats = cur.fetchall()
+    session = session_factory()
+
+    for mp in mps_list:
+        session.query(MPCommons).filter(MPCommons.Constituency==mp['constituency']).\
+            update({
+                MPCommons.Name:mp['name'], 
+                MPCommons.Party:mp['party'],
+                MPCommons.MP:1,  
+                MPCommons.MemberId:mp['member_id'],
+                MPCommons.PersonId:mp['person_id']
+            })
+
+    session.commit()
+
+    remaining_mp_list = []
+
+    for seat in session.query(MPCommons.Constituency).filter(MPCommons.MP==0):
+        seat_json = fetch_data_online('getMP', '&constituency=%s'%seat)
         
-        for seat in empty_seats:
-            seat_json = fetch_data_online('getMP', '&constituency=%s'%seat)
-            
-            if "error" in seat_json.keys():
-                print seat_json["error"]
-                print "***WARNING***: Check by-election for: %s" % seat[0]
-                continue
-            seat_json["name"] = seat_json["full_name"]
-            mp, office = build_mp_and_office_lists([seat_json])
+        if "error" in seat_json.keys():
+            print seat_json["error"]
+            print "***WARNING***: Check by-election for: %s" % seat
+            continue
+        seat_json["name"] = seat_json["full_name"]
+        mp, office = build_mp_and_office_lists([seat_json])
 
-            mps_list.extend(mp)
-            offices_list.extend(office)
+        remaining_mp_list.extend(mp)
+        offices_list.extend(office)
 
-        #input remaining data and offices into databases
-        cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
-                        WHERE Constituency=?', mps_list)
+    for mp in remaining_mp_list:
+        session.query(MPCommons).filter(MPCommons.Constituency==mp['constituency']).\
+            update({
+                MPCommons.Name:mp['name'], 
+                MPCommons.Party:mp['party'],
+                MPCommons.MP:1,  
+                MPCommons.MemberId:mp['member_id'],
+                MPCommons.PersonId:mp['person_id']
+            })
 
-        cur.executemany('INSERT OR REPLACE INTO Offices VALUES(?,?,?,?,?,?)', offices_list)
-        connection.commit()
+    # filter unique list of offices
+    unique_office_tuple_set = set([ tuple(o_dict.items()) for o_dict in offices_list])
+    unique_offices = [dict(unique_tuple) for unique_tuple in unique_office_tuple_set]
+
+
+    offices= [ Office(PersonId=o['person_id'], Office=o['department'], 
+                    StartDate=o['start_date'], EndDate=o['end_date'],
+                    Name=o['name'], Title=o['title']
+                      ) for o in unique_offices ]   
+
+    session.add_all(set(offices))
+    session.commit()
 
 def download_images_from_person_id(person_id):
     image_req = requests.get(site+'images/mps/%d.jpg'%person_id)
@@ -157,7 +180,7 @@ def load_images_for_imageless_mps():
 def TWFY_setup(session_factory):
     start = time.time()
     load_constituencies(session_factory)
-    load_mp_details()
+    load_mp_details(session_factory)
     # load_images_for_imageless_mps()
     print 'TWFY Setup in %ds'%(time.time()-start)
 

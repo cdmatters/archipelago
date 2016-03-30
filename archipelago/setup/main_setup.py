@@ -10,17 +10,15 @@ from models import Base
 from sqlalchemy import create_engine 
 from sqlalchemy.orm import sessionmaker   
 
-def create_database(dbname='sqlite:///parl.db'):
-    db_url = dbname
-
+def create_database(db_url='sqlite:///parl.db'):
     engine = create_engine(db_url, echo=False)
     Base.metadata.drop_all(engine, checkfirst=True)
     Base.metadata.create_all(engine)
     return engine
 
-def setup_archipelago():
+def setup_archipelago(db_url='sqlite:///parl.db'):
     try:
-        engine = create_database()
+        engine = create_database(db_url)
         session_factory = sessionmaker(bind=engine) 
 
         pi_TWFY.TWFY_setup(session_factory)

@@ -12,12 +12,12 @@ class MPCommons(Base):
 
     Name = Column(String)
     Constituency = Column(String, primary_key=True)
-    MP = Column(Boolean, default=0)
+    MP = Column(Integer, default=0)
     Party = Column(String)
     ImageUrl = Column(String)
-    MemberId = Column(Integer, default=0)
-    PersonId = Column(Integer, default=0)
-    OfficialId = Column(Integer, index=True, default=0)
+    MemberId = Column(Integer, unique=True, nullable=True)
+    PersonId = Column(Integer, unique=True, nullable=True)
+    OfficialId = Column(Integer, unique=True, nullable=True)
     Addresses = relationship("Address",
                             backref="mp",
                             primaryjoin="Address.OfficialId==MPCommons.OfficialId")

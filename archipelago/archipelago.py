@@ -17,17 +17,22 @@ class Archipelago(object):
     _session_factory = sessionmaker()
     
     def __init__(self, database=None):
-        if not database:
-            database = os.getenv('ARCHIPELAGO_DB', 'sqlite:///parl.db')
+        if not self._db_url:
+            self._db_url = os.getenv('ARCHIPELAGO_DB', 'sqlite:///parl.db')
 
+        if  database != None:
+            # effectively a 'reset' & change db. not ideal. this all needs serious rework.
+            self._db_url = database
+            self._engine = None
+        
         if not self._engine:
-            self._engine = create_engine(database, echo=False)
+            self._engine = create_engine(self._db_url, echo=False)
             self._session_factory.configure(bind=self._engine)
 
         if  not self._engine.has_table(MPCommons.__tablename__) or \
             not self._engine.has_table(Address.__tablename__) or \
             not self._engine.has_table(Office.__tablename__): 
-           self._engine, self._session_factory = setup_archipelago()
+           self._engine, self._session_factory = setup_archipelago(self._db_url)
 
 
         self.session = self._session_factory()

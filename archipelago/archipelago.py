@@ -16,7 +16,10 @@ class Archipelago(object):
     _engine = None 
     _session_factory = sessionmaker()
     
-    def __init__(self, database="sqlite:///parl.db"):
+    def __init__(self, database=None):
+        if not database:
+            database = os.getenv('ARCHIPELAGO_DB', 'sqlite:///parl.db')
+
         if not self._engine:
             self._engine = create_engine(database, echo=False)
             self._session_factory.configure(bind=self._engine)
@@ -46,11 +49,13 @@ class Archipelago(object):
                    {   
                     "name": MP.Name,
                     "party":MP.Party,
+                    "constituency":MP.Constituency,
                     "o_id":MP.OfficialId, 
                     "twitter_url":twitter_url, 
                     "handle":twitter_url[20:] 
                     } for MP, twitter_url in results 
                 ]
+
 
 
 

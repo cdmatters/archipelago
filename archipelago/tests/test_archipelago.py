@@ -363,17 +363,17 @@ class TestLoadDataMethods(unittest.TestCase):
             loaded_constituencies = cur.fetchall()
 
             test_reference = [
-                (None, u'Worsley and Eccles South', 0, None, None, 0, 0, 0),
-                (None, u'Worthing West', 0, None, None, 0, 0, 0),
-                (None, u'Wrexham', 0, None, None, 0, 0, 0),
-                (None, u'Wycombe', 0, None, None, 0, 0, 0),
-                (None, u'Wyre and Preston North', 0, None, None, 0, 0, 0), 
-                (None, u'Wyre Forest', 0, None, None, 0, 0, 0),
-                (None, u'Wythenshawe and Sale East', 0, None, None, 0, 0, 0),
-                (None, u'Yeovil', 0, None, None, 0, 0, 0),
-                (None, u'Ynys M\xf4n', 0, None, None, 0, 0, 0),
-                (None, u'York Central', 0, None, None, 0, 0, 0), 
-                (None, u'York Outer', 0, None, None, 0, 0, 0)
+                (None, u'Worsley and Eccles South', 0, None, None, None, None, None),
+                (None, u'Worthing West', 0, None, None, None, None, None),
+                (None, u'Wrexham', 0, None, None, None, None, None),
+                (None, u'Wycombe', 0, None, None, None, None, None),
+                (None, u'Wyre and Preston North', 0, None, None, None, None, None), 
+                (None, u'Wyre Forest', 0, None, None, None, None, None),
+                (None, u'Wythenshawe and Sale East', 0, None, None, None, None, None),
+                (None, u'Yeovil', 0, None, None, None, None, None),
+                (None, u'Ynys M\xf4n', 0, None, None, None, None, None),
+                (None, u'York Central', 0, None, None, None, None, None), 
+                (None, u'York Outer', 0, None, None, None, None, None)
             ]
             
             self.assertEqual( loaded_constituencies[-11:], test_reference)
@@ -394,11 +394,11 @@ class TestLoadDataMethods(unittest.TestCase):
 
             loaded_mps = cur.fetchall()
             mp_test_reference = [
-                (u'Mike Kane', u'Wythenshawe and Sale East', 1, u'Labour', None, 40912, 25220, 0), 
-                (u'Marcus Fysh', u'Yeovil', 1, u'Conservative', None, 41102, 25384, 0), 
-                (u'Albert Owen', u'Ynys M\xf4n', 1, u'Labour', None, 40873, 11148, 0), 
-                (u'Rachael Maskell', u'York Central', 1, u'Labour/Co-operative', None, 41325, 25433, 0), 
-                (u'Julian Sturdy', u'York Outer', 1, u'Conservative', None, 41326, 24853, 0)
+                (u'Mike Kane', u'Wythenshawe and Sale East', 1, u'Labour', None, 40912, 25220, None), 
+                (u'Marcus Fysh', u'Yeovil', 1, u'Conservative', None, 41102, 25384, None), 
+                (u'Albert Owen', u'Ynys M\xf4n', 1, u'Labour', None, 40873, 11148, None), 
+                (u'Rachael Maskell', u'York Central', 1, u'Labour/Co-operative', None, 41325, 25433, None), 
+                (u'Julian Sturdy', u'York Outer', 1, u'Conservative', None, 41326, 24853, None)
             ]
             
             # Test MPs general data has loaded
@@ -468,12 +468,14 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
                     "Liberal Democrat", 
                     40728, 
                     11489,
-                    "Ceredigion"
+                    123456789,
+                    "Ceredigion",
                 ),(
                     "William Marks",
                     "Labour", 
                     40730, 
                     11491,
+                    987654321,
                     "York Outer"
                 ) 
             ],
@@ -497,7 +499,7 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
         )
         with sqlite3.connect(self.test_db) as connection:       
             cur = connection.cursor()
-            cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?\
+            cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?, OfficialId=?\
                             WHERE Constituency=?', test_reference[0])  
             cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?,?)', test_reference[1])
             
@@ -525,6 +527,36 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
     def test_return_MP_addresses(self):
         """ACCESS:: Test addresses returned for an MP or constituency"""
         pass
+
+    def test_return_mps_by_o_id(self):
+        request = [123456789,987654321]
+
+        arch = archipelago.Archipelago("sqlite:///test.db")
+        mp_list = arch.get_mps_by_o_id(request)
+
+        
+        self.assertEqual(mp_list[0].Name, "Mark Williams")
+        self.assertEqual(mp_list[0].Party, "Liberal Democrat")
+        self.assertEqual(mp_list[0].Constituency, "Ceredigion")
+        self.assertEqual(mp_list[0].MemberId, 40728)
+        self.assertEqual(mp_list[0].PersonId, 11489)
+        self.assertEqual(mp_list[0].OfficialId, 123456789)
+        
+        offices_list = mp_list[0].Offices
+        self.assertEqual(offices_list[0].Office, "Foreign Office")
+        self.assertEqual(offices_list[0].Title, "Foreign Secretary")
+        self.assertEqual(offices_list[1].Office, "Welsh Affairs Committee")
+        self.assertEqual(offices_list[1].Title, "Member")
+
+
+        self.assertEqual(mp_list[1].Name, "William Marks")
+        self.assertEqual(mp_list[1].Party, "Labour")
+        self.assertEqual(mp_list[1].Constituency, "York Outer")
+        self.assertEqual(mp_list[1].MemberId, 40730)
+        self.assertEqual(mp_list[1].PersonId, 11491)
+        self.assertEqual(mp_list[1].OfficialId, 987654321)
+
+        self.assertEqual(mp_list[1].Offices, [])
 
 
 if __name__ == '__main__':

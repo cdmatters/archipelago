@@ -61,6 +61,9 @@ class Archipelago(object):
                     } for MP, twitter_url in results 
                 ]
 
+    def get_mps_by_o_id(self, o_id_list):
+        return self.session.query(MPCommons).filter(MPCommons.OfficialId.in_(o_id_list)).order_by(MPCommons.Name).all()
+
 
 
 

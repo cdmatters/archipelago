@@ -477,7 +477,14 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
                     11491,
                     987654321,
                     "York Outer"
-                ) 
+                ),(
+                    "Mill Warkiams",
+                    "Labour", 
+                    40732, 
+                    11493,
+                    11223344,
+                    "Belfast West"
+                )  
             ],
             [
                 (
@@ -495,6 +502,13 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
                     "Mark Williams",
                     "Foreign Secretary"
                 )
+            ],
+            [
+                (
+                    11223344,
+                    'twitter',
+                    'whatahandle'
+                )
             ]
         )
         with sqlite3.connect(self.test_db) as connection:       
@@ -502,7 +516,7 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
             cur.executemany('UPDATE MPCommons SET Name=?,Party=?,MP=1,MemberId=?,PersonId=?, OfficialId=?\
                             WHERE Constituency=?', test_reference[0])  
             cur.executemany('INSERT INTO Offices VALUES(?,?,?,?,?,?)', test_reference[1])
-            
+            cur.executemany('INSERT INTO Addresses VALUES(?,?,?)', test_reference[2])
 
     def tearDown(self):
         os.remove(self.test_db)
@@ -528,11 +542,11 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
         """ACCESS:: Test addresses returned for an MP or constituency"""
         pass
 
-    def test_return_mps_by_o_id(self):
+    def test_return_mps_by_official_id(self):
         request = [123456789,987654321]
 
         arch = archipelago.Archipelago("sqlite:///test.db")
-        mp_list = arch.get_mps_by_o_id(request)
+        mp_list = arch.get_mps_by_official_id(request)
 
         
         self.assertEqual(mp_list[0].Name, "Mark Williams")
@@ -557,6 +571,24 @@ class TestDatabaseAccessorMethods(unittest.TestCase):
         self.assertEqual(mp_list[1].OfficialId, 987654321)
 
         self.assertEqual(mp_list[1].Offices, [])
+
+    def test_return_tweeting_mps(self):
+
+        arch = archipelago.Archipelago("sqlite:///test.db")
+        mp_list = arch.get_all_tweeting_mps()
+
+        self.assertEqual(mp_list[0].Name, "Mill Warkiams")
+        self.assertEqual(mp_list[0].Party, "Labour")
+        self.assertEqual(mp_list[0].Constituency, "Belfast West")
+        self.assertEqual(mp_list[0].MemberId, 40732)
+        self.assertEqual(mp_list[0].PersonId, 11493)
+        self.assertEqual(mp_list[0].OfficialId, 11223344)
+        
+        address_list = mp_list[0].Addresses
+        self.assertEqual(address_list[0].AddressType, "twitter")
+        self.assertEqual(address_list[0].Address, "whatahandle")
+
+        self.assertEqual(mp_list[0].Offices, [])
 
 
 if __name__ == '__main__':

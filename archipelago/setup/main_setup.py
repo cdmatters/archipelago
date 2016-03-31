@@ -10,6 +10,7 @@ from models import Base
 from sqlalchemy import create_engine 
 from sqlalchemy.orm import sessionmaker   
 
+
 def create_database(db_url='sqlite:///parl.db'):
     engine = create_engine(db_url, echo=False)
     Base.metadata.drop_all(engine, checkfirst=True)

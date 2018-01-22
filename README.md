@@ -7,27 +7,27 @@ It quickly creates a complete local database of parliamentary information for th
 
 
 
-##RUN: 
+## RUN: 
 1. pip install archipelago
 2. *parl_init_TWFY* requires an api key. Generate this
 on the TWFY website.
 3. the first time you run after import archipelago, it will ask for your key.
 
-##DATA:
+## DATA:
 
 * **House of Commons**: name, constituency, party, seats/offices, websites, twitter handles, small official photos of every MP
 * **House of Lords**: *incomplete*
 
-##IDEAS:
+## IDEAS:
 
 * making a map/graph of jobs by committee
 * scraping/rss to pick up relevant news articles for mps
 * checking blogs of mps and linking to relevant articles
 * searching official gov site (not TWFY)
 
-##PROJECTS:
+## PROJECTS:
 
-####Twirps
+#### Twirps
 
 This project populates a database of tweets from MPs
 and provides analysis on them.
